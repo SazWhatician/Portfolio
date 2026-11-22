@@ -242,7 +242,9 @@ export function GlassCarousel({
   cb.current = onActiveChange;
   const focusCb = useRef(onFocusChange);
   focusCb.current = onFocusChange;
-  const bg = theme === "night" ? "#060a17" : "#ffffff";
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
+  const hasEntered = useRef(false);
 
   useEffect(() => {
     const el = host.current,
@@ -276,7 +278,6 @@ export function GlassCarousel({
       return;
     }
     const N = items.length;
-    const [br, bgc, bb] = hexRgb(bg);
 
     // Unit quad shared by both passes.
     const quad = gl.createBuffer();
@@ -433,17 +434,17 @@ export function GlassCarousel({
       pmx = -1,
       pmy = -1,
       inside = false;
+    let entering = entry && !reduced && !hasEntered.current;
     const focus = {
       on: false,
-      fx: entry && !reduced ? 0 : 1,
+      fx: entering ? 0 : 1,
       scale: 1,
       index: -1,
       xOffset: 0,
     };
     const drop = new Float32Array(N * 7);
-    const rise = new Float32Array(N * 7).fill(entry && !reduced ? 0 : 1);
-    const grow = new Float32Array(N * 7).fill(entry && !reduced ? 0 : 1);
-    let entering = entry && !reduced;
+    const rise = new Float32Array(N * 7).fill(entering ? 0 : 1);
+    const grow = new Float32Array(N * 7).fill(entering ? 0 : 1);
     const tweens = [];
     const tween = (get, set, to, dur, delay, ease, done) =>
       tweens.push({
@@ -774,7 +775,7 @@ export function GlassCarousel({
       lastInput = performance.now();
       wake();
     };
-    engine.current = { next: () => step(1), prev: () => step(-1), close };
+    engine.current = { next: () => step(1), prev: () => step(-1), close, wake };
 
     // ---------- intro ----------
     if (entering) {
@@ -825,10 +826,14 @@ export function GlassCarousel({
           rise.fill(1);
           grow.fill(1);
           entering = false;
+          hasEntered.current = true;
           setShown(true);
         },
         growEnd * 1000 + 30,
       );
+    } else {
+      hasEntered.current = true;
+      setShown(true);
     }
 
     // ---------- input ----------
@@ -956,7 +961,11 @@ export function GlassCarousel({
       cv.removeEventListener("click", onClick);
       engine.current = null;
     };
-  }, [items, panelHeight, gap, bg, entry, motion]);
+  }, [items, panelHeight, gap, entry, motion]);
+
+  useEffect(() => {
+    engine.current?.wake?.();
+  }, [theme]);
 
   const onKeyDown = (e) => {
     cozyAudio.unlock();
@@ -1043,10 +1052,20 @@ export function GlassCarousel({
             type="button"
             onClick={() => engine.current?.close()}
             aria-label="Close project preview"
-            className="group flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 hover:bg-black text-white shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border border-neutral-800"
+            className={`group flex items-center gap-2 px-4 py-2 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border ${
+              theme === "night"
+                ? "bg-neutral-900/90 hover:bg-black text-white border-white/20"
+                : "bg-white/90 hover:bg-neutral-50 text-neutral-900 border-neutral-200"
+            }`}
             onMouseEnter={() => cozyAudio.playHover?.()}
           >
-            <span className="size-4 rounded-full bg-neutral-800 group-hover:bg-neutral-700 flex items-center justify-center transition-colors">
+            <span
+              className={`size-4 rounded-full flex items-center justify-center transition-colors ${
+                theme === "night"
+                  ? "bg-neutral-800 group-hover:bg-neutral-700 text-white"
+                  : "bg-neutral-100 group-hover:bg-neutral-200 text-neutral-800"
+              }`}
+            >
               <svg
                 width="10"
                 height="10"
@@ -1064,7 +1083,13 @@ export function GlassCarousel({
             <span className="text-[11px] font-mono uppercase tracking-wider font-semibold">
               Close
             </span>
-            <kbd className="hidden sm:inline-block text-[9px] font-mono text-neutral-400 border border-neutral-700 px-1 py-0.5 rounded leading-none">
+            <kbd
+              className={`hidden sm:inline-block text-[9px] font-mono border px-1 py-0.5 rounded leading-none ${
+                theme === "night"
+                  ? "text-neutral-400 border-neutral-700"
+                  : "text-neutral-500 border-neutral-300"
+              }`}
+            >
               ESC
             </kbd>
           </button>
@@ -1097,13 +1122,27 @@ export function GlassCarousel({
                 }
           }
         >
-          <div className="flex flex-col justify-between h-full bg-white/95 backdrop-blur-2xl border border-neutral-200/90 rounded-3xl p-6 sm:p-8 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] overflow-y-auto">
+          <div
+            className={`flex flex-col justify-between h-full backdrop-blur-2xl rounded-3xl p-6 sm:p-8 transition-colors duration-500 overflow-y-auto ${
+              theme === "night"
+                ? "bg-[#060a17]/90 border border-white/15 text-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)]"
+                : "bg-white/95 border border-neutral-200/90 text-neutral-900 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)]"
+            }`}
+          >
             <div>
               {/* Category & Year */}
-              <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-neutral-400 mb-3">
+              <div
+                className={`flex items-center justify-between text-xs font-mono uppercase tracking-widest mb-3 ${
+                  theme === "night" ? "text-neutral-400" : "text-neutral-400"
+                }`}
+              >
                 <div className="flex items-center gap-2">
                   <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-neutral-900 font-semibold">
+                  <span
+                    className={`font-semibold ${
+                      theme === "night" ? "text-white" : "text-neutral-900"
+                    }`}
+                  >
                     {pad(active + 1)} // {current?.category || "SELECTED WORK"}
                   </span>
                 </div>
@@ -1111,20 +1150,36 @@ export function GlassCarousel({
               </div>
 
               {/* Title */}
-              <h2 className="font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05]">
+              <h2
+                className={`font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.05] ${
+                  theme === "night" ? "text-white" : "text-neutral-900"
+                }`}
+              >
                 {current?.title}
               </h2>
 
               {/* Tagline */}
-              <p className="mt-2 text-sm sm:text-base font-medium text-neutral-700 leading-snug">
+              <p
+                className={`mt-2 text-sm sm:text-base font-medium leading-snug ${
+                  theme === "night" ? "text-neutral-300" : "text-neutral-700"
+                }`}
+              >
                 {current?.tagline || "Spatial architecture and interactive system design."}
               </p>
 
               {/* Divider */}
-              <div className="h-px bg-neutral-200/80 my-4" />
+              <div
+                className={`h-px my-4 ${
+                  theme === "night" ? "bg-white/10" : "bg-neutral-200/80"
+                }`}
+              />
 
               {/* Description */}
-              <p className="text-xs sm:text-sm text-neutral-600 font-light leading-relaxed">
+              <p
+                className={`text-xs sm:text-sm font-light leading-relaxed ${
+                  theme === "night" ? "text-neutral-300" : "text-neutral-600"
+                }`}
+              >
                 {current?.description || "An experimental spatial system architected with Next.js, Three.js, and WebGL. Explores depth mapping, non-euclidean viewports, and tactile digital interactions."}
               </p>
 
@@ -1134,7 +1189,11 @@ export function GlassCarousel({
                   {current.stack.map((tech) => (
                     <span
                       key={tech}
-                      className="px-2.5 py-1 rounded-md bg-neutral-100/90 border border-neutral-200/70 text-[10px] font-mono uppercase tracking-wider text-neutral-600"
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-mono uppercase tracking-wider ${
+                        theme === "night"
+                          ? "bg-white/10 border border-white/15 text-neutral-200"
+                          : "bg-neutral-100/90 border border-neutral-200/70 text-neutral-600"
+                      }`}
                     >
                       {tech}
                     </span>
@@ -1144,13 +1203,21 @@ export function GlassCarousel({
             </div>
 
             {/* Bottom Actions Row: 2 Small Sleek Buttons */}
-            <div className="mt-6 pt-4 border-t border-neutral-100 flex items-center gap-3">
+            <div
+              className={`mt-6 pt-4 border-t flex items-center gap-3 ${
+                theme === "night" ? "border-white/10" : "border-neutral-100"
+              }`}
+            >
               {/* Button 1: Live Demo / Visit Site */}
               <a
                 href={current?.liveUrl || "https://github.com/SazWhatician"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group/btn inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 text-white text-xs font-semibold hover:bg-black transition-all shadow-sm hover:scale-105 active:scale-95 no-underline"
+                className={`group/btn inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-sm hover:scale-105 active:scale-95 no-underline ${
+                  theme === "night"
+                    ? "bg-white text-neutral-900 hover:bg-neutral-100"
+                    : "bg-neutral-900 text-white hover:bg-black"
+                }`}
                 onMouseEnter={() => cozyAudio.playHover?.()}
                 onClick={() => cozyAudio.playSnap?.(3, 1)}
               >
@@ -1176,7 +1243,11 @@ export function GlassCarousel({
                 href={current?.githubUrl || "https://github.com/SazWhatician"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group/gh inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-neutral-900 text-xs font-semibold border border-neutral-300 hover:border-neutral-900 transition-all shadow-sm hover:scale-105 active:scale-95 no-underline"
+                className={`group/gh inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all shadow-sm hover:scale-105 active:scale-95 no-underline ${
+                  theme === "night"
+                    ? "bg-white/10 text-white border border-white/20 hover:border-white/40 hover:bg-white/15"
+                    : "bg-white text-neutral-900 border border-neutral-300 hover:border-neutral-900"
+                }`}
                 onMouseEnter={() => cozyAudio.playHover?.()}
                 onClick={() => cozyAudio.playSnap?.(4, 1)}
               >
