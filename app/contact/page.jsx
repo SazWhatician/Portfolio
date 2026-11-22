@@ -17,10 +17,15 @@ import {
   FileText,
   Paperclip,
   RotateCcw,
+  Sun,
+  Moon,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import FramelessNav from "@/components/ui/frameless-nav";
 import ArchitecturalGrid from "@/components/ui/architectural-grid";
 import { getSystemTimeTheme } from "@/components/ui/time-clock";
+import { useThemeMode } from "@/lib/use-theme-mode";
 import { cozyAudio } from "@/lib/cozy-sound";
 
 const bodoni = Bodoni_Moda({
@@ -508,7 +513,8 @@ function TransmissionSuccessSeal({
    MAIN CONTACT PAGE — THE AUREA SIGNAL CHAMBER
    ============================================================================ */
 export default function ContactPage() {
-  const [systemTheme, setSystemTheme] = useState("sunset");
+  const { isNight, toggleTheme, systemTheme } = useThemeMode();
+  const [isMuted, setIsMuted] = useState(false);
   const [istClock, setIstClock] = useState("--:--:--");
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [selectedDisciplineIdx, setSelectedDisciplineIdx] = useState(0);
@@ -537,7 +543,12 @@ export default function ContactPage() {
   const attachedFilesRef = useRef([]);
   attachedFilesRef.current = attachedFiles;
 
-  const isNight = systemTheme === "night";
+  const toggleSound = () => {
+    const muted = cozyAudio.toggleMute();
+    setIsMuted(muted);
+    if (!muted) cozyAudio.playSnap(3, 1);
+  };
+
   const selectedDiscipline = DISCIPLINES[selectedDisciplineIdx];
 
   const accentHex = isNight ? "#a5b4fc" : systemTheme === "sunset" ? "#9b3d0b" : "#875311";
@@ -567,17 +578,9 @@ export default function ContactPage() {
   }, [formState, attachedFiles.length]);
 
   /* --------------------------------------------------------------------------
-     1. THEME SYNC, LIVE IST CHRONOMETER, AUDIO ENTRY & BLOB CLEANUP
+     1. LIVE IST CHRONOMETER, AUDIO ENTRY & BLOB CLEANUP
      -------------------------------------------------------------------------- */
   useEffect(() => {
-    const syncTheme = () => {
-      const th = getSystemTimeTheme();
-      setSystemTheme(th);
-      cozyAudio.setTheme?.(th);
-    };
-    syncTheme();
-    const themeTimer = setInterval(syncTheme, 10000);
-
     const updateIst = () => {
       try {
         const nowStr = new Intl.DateTimeFormat("en-GB", {
@@ -602,7 +605,6 @@ export default function ContactPage() {
     }, 320);
 
     return () => {
-      clearInterval(themeTimer);
       clearInterval(clockTimer);
       clearTimeout(entryAudio);
       attachedFilesRef.current.forEach((f) => {
@@ -934,10 +936,55 @@ export default function ContactPage() {
         }`}
     >
       {/* 1. Top-Center Celestial Half-Compass Navigation */}
-      <FramelessNav activeTheme={systemTheme} />
+      <FramelessNav activeTheme={isNight ? "night" : systemTheme} />
 
       {/* 2. Architectural Blueprint Grid Background */}
-      <ArchitecturalGrid />
+      <ArchitecturalGrid isNight={isNight} />
+
+      {/* Top Floating Controls: Theme Switcher & Chime Toggle */}
+      <div className="fixed top-3.5 right-4 sm:top-5 sm:right-6 z-40 pointer-events-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border transition-all text-xs font-mono shadow-sm backdrop-blur-md cursor-pointer ${
+            isNight
+              ? "border-white/15 text-neutral-200 bg-[#090f24]/80 hover:bg-white/15"
+              : "border-neutral-200/90 text-neutral-700 bg-white/85 hover:bg-neutral-100 hover:text-black"
+          }`}
+          title={isNight ? "Switch to light theme" : "Switch to dark theme"}
+          aria-label="Toggle theme mode"
+        >
+          {isNight ? (
+            <Sun className="size-3.5 text-amber-300" />
+          ) : (
+            <Moon className="size-3.5 text-neutral-700" />
+          )}
+          <span className="hidden sm:inline font-mono">
+            {isNight ? "LIGHT" : "DARK"}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={toggleSound}
+          className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full border transition-all text-xs font-mono shadow-sm backdrop-blur-md cursor-pointer ${
+            isNight
+              ? "border-white/15 text-neutral-200 bg-[#090f24]/80 hover:bg-white/15"
+              : "border-neutral-200/90 text-neutral-700 bg-white/85 hover:bg-neutral-100 hover:text-black"
+          }`}
+          title={isMuted ? "Enable sound chimes" : "Mute sound chimes"}
+          aria-label="Toggle sound chimes"
+        >
+          {isMuted ? (
+            <VolumeX className="size-3.5 text-neutral-400" />
+          ) : (
+            <Volume2 className={`size-3.5 ${isNight ? "text-indigo-300" : "text-neutral-900"}`} />
+          )}
+          <span className="hidden sm:inline font-mono">
+            {isMuted ? "CHIME OFF" : "CHIME ON"}
+          </span>
+        </button>
+      </div>
 
       {/* 3. Golden-Section Vertical Meridians (38.2% & 61.8%) */}
       <div aria-hidden="true" className="fixed inset-0 pointer-events-none z-0 hidden lg:block">
