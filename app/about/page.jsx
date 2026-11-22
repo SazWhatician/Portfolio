@@ -7,6 +7,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
   Volume2,
   VolumeX,
+  Sun,
+  Moon,
   ArrowRight,
   ArrowUpRight,
   ExternalLink,
@@ -14,6 +16,8 @@ import {
 import { cozyAudio } from "@/lib/cozy-sound";
 import TeamMemberCard from "@/components/ui/team-member-card";
 import FramelessNav from "@/components/ui/frameless-nav";
+import ArchitecturalGrid from "@/components/ui/architectural-grid";
+import { useThemeMode } from "@/lib/use-theme-mode";
 
 const PHI = 1.618033988749895;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // 137.507764°
@@ -354,7 +358,7 @@ function AngelicOphanimCanvas({ bridgeRef }) {
    Pixel-exact dash lengths. Hovering snaps to the nearest of the 13 nodes
    and illuminates its connected Platonic chords. Strictly contained 400x400.
    ============================================================================ */
-function InteractiveMetatronBlueprint() {
+function InteractiveMetatronBlueprint({ isNight = false }) {
   const [hoveredNode, setHoveredNode] = useState(null);
 
   const { haloCirc, circleCirc, circles, chords, spiral } = useMemo(() => {
@@ -433,7 +437,13 @@ function InteractiveMetatronBlueprint() {
 
   return (
     <div className="mt-10 w-full max-w-[340px] mx-auto lg:mx-0">
-      <div className="relative rounded-2xl border border-black/[0.06] bg-[#faf9f6]/75 p-4 overflow-hidden">
+      <div
+        className={`relative rounded-2xl border transition-colors p-4 overflow-hidden ${
+          isNight
+            ? "border-slate-800 bg-[#090f24]/90 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+            : "border-black/[0.06] bg-[#faf9f6]/75"
+        }`}
+      >
         <svg
           viewBox="0 0 400 400"
           fill="none"
@@ -446,7 +456,7 @@ function InteractiveMetatronBlueprint() {
             cx="200"
             cy="200"
             r="178"
-            stroke="rgba(23,23,23,0.14)"
+            stroke={isNight ? "rgba(255,255,255,0.18)" : "rgba(23,23,23,0.14)"}
             strokeWidth="1"
             strokeDasharray={haloCirc}
             strokeDashoffset={haloCirc}
@@ -466,10 +476,16 @@ function InteractiveMetatronBlueprint() {
                   y2={l.y2}
                   stroke={
                     lit
-                      ? "#a6864a"
+                      ? isNight
+                        ? "#fbbf24"
+                        : "#a6864a"
                       : l.inner
-                        ? "rgba(166,134,74,0.34)"
-                        : "rgba(23,23,23,0.11)"
+                        ? isNight
+                          ? "rgba(251,191,36,0.38)"
+                          : "rgba(166,134,74,0.34)"
+                        : isNight
+                          ? "rgba(255,255,255,0.12)"
+                          : "rgba(23,23,23,0.11)"
                   }
                   strokeWidth={lit ? "1.35" : l.inner ? "0.85" : "0.6"}
                   strokeDasharray={l.len}
@@ -492,10 +508,16 @@ function InteractiveMetatronBlueprint() {
                     r={c.r}
                     stroke={
                       isSelected
-                        ? "#a6864a"
+                        ? isNight
+                          ? "#fbbf24"
+                          : "#a6864a"
                         : c.tier === 0
-                          ? "#a6864a"
-                          : "rgba(23,23,23,0.24)"
+                          ? isNight
+                            ? "#fbbf24"
+                            : "#a6864a"
+                          : isNight
+                            ? "rgba(255,255,255,0.26)"
+                            : "rgba(23,23,23,0.24)"
                     }
                     strokeWidth={isSelected ? "1.6" : c.tier === 0 ? "1.2" : "0.8"}
                     strokeDasharray={circleCirc}
@@ -506,7 +528,15 @@ function InteractiveMetatronBlueprint() {
                     cx={c.cx}
                     cy={c.cy}
                     r={isSelected ? "4.2" : "2.1"}
-                    fill={isSelected ? "#a6864a" : "rgba(23,23,23,0.38)"}
+                    fill={
+                      isSelected
+                        ? isNight
+                          ? "#fbbf24"
+                          : "#a6864a"
+                        : isNight
+                          ? "rgba(255,255,255,0.4)"
+                          : "rgba(23,23,23,0.38)"
+                    }
                     className="transition-all duration-200"
                   />
                 </g>
@@ -517,22 +547,26 @@ function InteractiveMetatronBlueprint() {
           {/* True Logarithmic Golden Spiral */}
           <path
             d={spiral.d}
-            stroke="#171717"
+            stroke={isNight ? "#ffffff" : "#171717"}
             strokeWidth="1.5"
             strokeDasharray={spiral.length}
             strokeDashoffset={spiral.length}
             className="metatron-spiral"
           />
-          <circle cx="200" cy="200" r="3.2" fill="#a6864a" />
+          <circle cx="200" cy="200" r="3.2" fill={isNight ? "#fbbf24" : "#a6864a"} />
         </svg>
 
-        <div className="mt-2 pt-2 border-t border-black/[0.06] flex items-center justify-between text-[10px] font-mono text-neutral-500 tracking-[0.18em]">
+        <div
+          className={`mt-2 pt-2 border-t flex items-center justify-between text-[10px] font-mono tracking-[0.18em] ${
+            isNight ? "border-white/[0.08] text-neutral-400" : "border-black/[0.06] text-neutral-500"
+          }`}
+        >
           <span>
             {hoveredNode !== null
               ? `NODE ${String(hoveredNode + 1).padStart(2, "0")} · 12 CHORDS`
               : "METATRON · 78 CHORDS"}
           </span>
-          <span className="text-[#a6864a]">Φ^(2θ/π)</span>
+          <span className={isNight ? "text-amber-400" : "text-[#a6864a]"}>Φ^(2θ/π)</span>
         </div>
       </div>
     </div>
@@ -948,6 +982,7 @@ export default function AboutPage() {
   const [activeSection, setActiveSection] = useState("01");
   const [hoveredDiscipline, setHoveredDiscipline] = useState(null);
   const [isEngulfed, setIsEngulfed] = useState(false);
+  const { isNight, toggleTheme, systemTheme } = useThemeMode();
 
   const pageRef = useRef(null);
   const topProgressRef = useRef(null);
@@ -1033,14 +1068,14 @@ export default function AboutPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Sync document overscroll background cleanly when fully engulfed (prevents white bounce)
+  // Sync document overscroll background cleanly when fully engulfed or night mode
   useEffect(() => {
     const prevBg = document.documentElement.style.backgroundColor;
-    document.documentElement.style.backgroundColor = isEngulfed ? "#09090b" : "#ffffff";
+    document.documentElement.style.backgroundColor = isNight || isEngulfed ? "#060a17" : "#ffffff";
     return () => {
       document.documentElement.style.backgroundColor = prevBg;
     };
-  }, [isEngulfed]);
+  }, [isNight, isEngulfed]);
 
   // Header live acoustic equalizer bars
   useEffect(() => {
@@ -1173,17 +1208,16 @@ export default function AboutPage() {
       const metatronTl = gsap.timeline({
         scrollTrigger: {
           trigger: ".manifesto-section",
-          start: "top 80%",
-          end: "bottom 55%",
-          scrub: 0.75,
+          start: "top 78%",
+          once: true,
         },
       });
 
       metatronTl
-        .to(".metatron-halo", { strokeDashoffset: 0, duration: 0.3, ease: "none" }, 0)
-        .to(".metatron-circle", { strokeDashoffset: 0, stagger: 0.025, duration: 0.42, ease: "none" }, 0.06)
-        .to(".metatron-chord", { strokeDashoffset: 0, stagger: 0.004, duration: 0.5, ease: "none" }, 0.22)
-        .to(".metatron-spiral", { strokeDashoffset: 0, duration: 0.52, ease: "none" }, 0.48);
+        .to(".metatron-halo", { strokeDashoffset: 0, duration: 0.8, ease: "power2.out" }, 0)
+        .to(".metatron-circle", { strokeDashoffset: 0, stagger: 0.035, duration: 0.8, ease: "power2.out" }, 0.15)
+        .to(".metatron-chord", { strokeDashoffset: 0, stagger: 0.006, duration: 0.9, ease: "power2.out" }, 0.35)
+        .to(".metatron-spiral", { strokeDashoffset: 0, duration: 1.1, ease: "power2.out" }, 0.6);
 
       // Metric counters
       gsap.utils.toArray(".metric-value").forEach((el) => {
@@ -1455,10 +1489,16 @@ export default function AboutPage() {
   return (
     <div
       ref={pageRef}
-      className="relative min-h-screen bg-white text-neutral-900 selection:bg-neutral-900 selection:text-white overflow-x-clip"
+      className={`relative min-h-screen selection:bg-neutral-900 selection:text-white overflow-x-clip transition-colors duration-700 ${
+        isNight || isEngulfed ? "bg-[#060a17] text-white" : "bg-white text-neutral-900"
+      }`}
     >
       {/* Astrolabe Celestial Compass Navigation */}
-      <FramelessNav activeTheme={isEngulfed ? "night" : "sunset"} />
+      <FramelessNav activeTheme={isNight || isEngulfed ? "night" : "sunset"} />
+
+      {/* Architectural Drafting Matrix Background */}
+      <ArchitecturalGrid isNight={isNight || isEngulfed} />
+
       {/* =========================================================================
           4D HOPF FIBRATION + 3D OPHANIM ANGELIC GEOMETRY CANVAS
           ========================================================================= */}
@@ -1467,9 +1507,17 @@ export default function AboutPage() {
       {/* =========================================================================
           AMBIENT ARCHITECTURAL STUDIO LIGHT VIGNETTES
           ========================================================================= */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[760px] h-[760px] rounded-full blur-[140px] bg-[#f7f2eb]/75" />
-        <div className="absolute bottom-1/4 right-1/4 w-[560px] h-[560px] rounded-full blur-[130px] bg-[#ede5d8]/45" />
+      <div aria-hidden="true" className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div
+          className={`absolute top-10 left-1/2 -translate-x-1/2 w-[760px] h-[760px] rounded-full blur-[140px] transition-colors duration-700 ${
+            isNight || isEngulfed ? "bg-indigo-950/20" : "bg-[#f7f2eb]/75"
+          }`}
+        />
+        <div
+          className={`absolute bottom-1/4 right-1/4 w-[560px] h-[560px] rounded-full blur-[130px] transition-colors duration-700 ${
+            isNight || isEngulfed ? "bg-amber-500/[0.04]" : "bg-[#ede5d8]/45"
+          }`}
+        />
       </div>
 
       {/* =========================================================================
@@ -1496,10 +1544,10 @@ export default function AboutPage() {
             >
               <span
                 className={`text-[10px] font-mono uppercase tracking-[0.22em] transition-all duration-300 ${isActive
-                    ? isEngulfed
+                    ? isNight || isEngulfed
                       ? "opacity-100 text-[#e5cca0] translate-x-0"
                       : "opacity-100 text-neutral-900 translate-x-0"
-                    : isEngulfed
+                    : isNight || isEngulfed
                       ? "opacity-0 group-hover:opacity-85 text-neutral-400 translate-x-2 group-hover:translate-x-0"
                       : "opacity-0 group-hover:opacity-85 text-neutral-500 translate-x-2 group-hover:translate-x-0"
                   }`}
@@ -1508,10 +1556,10 @@ export default function AboutPage() {
               </span>
               <span
                 className={`block rounded-full transition-all duration-300 ${isActive
-                    ? isEngulfed
+                    ? isNight || isEngulfed
                       ? "w-6 h-1.5 bg-[#e5cca0]"
                       : "w-6 h-1.5 bg-neutral-900"
-                    : isEngulfed
+                    : isNight || isEngulfed
                       ? "size-1.5 bg-white/30 group-hover:bg-white/75"
                       : "size-1.5 bg-neutral-900/25 group-hover:bg-neutral-900/75"
                   }`}
@@ -1521,21 +1569,42 @@ export default function AboutPage() {
         })}
         <span
           ref={scrollPctRef}
-          className={`mt-2 text-[10px] font-mono tracking-widest tabular-nums transition-colors duration-500 ${isEngulfed ? "text-neutral-500" : "text-neutral-400"
+          className={`mt-2 text-[10px] font-mono tracking-widest tabular-nums transition-colors duration-500 ${isNight || isEngulfed ? "text-neutral-500" : "text-neutral-400"
             }`}
         >
           00%
         </span>
       </nav>
 
-      {/* Floating Ergonomic Sound Chime Toggle (No banner bar) */}
-      <div className="fixed top-3.5 right-4 sm:top-5 sm:right-6 z-40 pointer-events-auto">
+      {/* Floating Ergonomic Controls: Theme Switcher & Sound Chime Toggle */}
+      <div className="fixed top-3.5 right-4 sm:top-5 sm:right-6 z-40 pointer-events-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full border transition-all text-xs font-mono shadow-sm backdrop-blur-md cursor-pointer ${
+            isNight || isEngulfed
+              ? "border-white/15 text-neutral-200 bg-[#090f24]/80 hover:bg-white/15"
+              : "border-neutral-200/90 text-neutral-700 bg-white/85 hover:bg-neutral-100 hover:text-black"
+          }`}
+          title={isNight ? "Switch to light theme" : "Switch to dark theme"}
+          aria-label="Toggle theme mode"
+        >
+          {isNight ? (
+            <Sun className="size-3.5 text-amber-300" />
+          ) : (
+            <Moon className="size-3.5 text-neutral-700" />
+          )}
+          <span className="hidden sm:inline font-mono">
+            {isNight ? "LIGHT" : "DARK"}
+          </span>
+        </button>
+
         <button
           type="button"
           onClick={toggleSound}
           className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full border transition-all text-xs font-mono shadow-sm backdrop-blur-md cursor-pointer ${
-            isEngulfed
-              ? "border-white/15 text-neutral-200 bg-[#09090b]/80 hover:bg-white/15"
+            isNight || isEngulfed
+              ? "border-white/15 text-neutral-200 bg-[#090f24]/80 hover:bg-white/15"
               : "border-neutral-200/90 text-neutral-700 bg-white/85 hover:bg-neutral-100 hover:text-black"
           }`}
           title={isMuted ? "Enable sound chimes" : "Mute sound chimes"}
@@ -1544,7 +1613,7 @@ export default function AboutPage() {
           {isMuted ? (
             <VolumeX className="size-3.5 text-neutral-400" />
           ) : (
-            <Volume2 className={`size-3.5 ${isEngulfed ? "text-[#e5cca0]" : "text-neutral-900"}`} />
+            <Volume2 className={`size-3.5 ${isNight || isEngulfed ? "text-[#e5cca0]" : "text-neutral-900"}`} />
           )}
           <svg
             ref={eqBarsRef}
@@ -1568,13 +1637,13 @@ export default function AboutPage() {
         <div
           ref={topProgressRef}
           className={`h-full w-full origin-left scale-x-0 will-change-transform transition-colors duration-500 ${
-            isEngulfed ? "bg-[#e5cca0]" : "bg-neutral-900"
+            isNight || isEngulfed ? "bg-[#e5cca0]" : "bg-neutral-900"
           }`}
         />
       </div>
 
       {/* =========================================================================
-          SECTIONS 01 – 04: ARCHITECTURAL LIGHT EDITORIAL CANVAS
+          SECTIONS 01 – 04: ARCHITECTURAL EDITORIAL CANVAS
           ========================================================================= */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-28 sm:pt-32 pb-16">
         {/* Top Editorial Eyebrow & Perspective Switcher */}
@@ -1592,33 +1661,49 @@ export default function AboutPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto bg-neutral-100/85 p-1 rounded-full border border-neutral-200/70">
+          <div
+            className={`flex items-center gap-2 self-start sm:self-auto p-1 rounded-full border transition-colors ${
+              isNight || isEngulfed
+                ? "bg-slate-900/80 border-slate-700"
+                : "bg-neutral-100/85 border-neutral-200/70"
+            }`}
+          >
             <span className="text-[11px] font-mono text-neutral-400 uppercase px-2">
               Layout:
             </span>
             <button
               type="button"
               onClick={() => switchCardPosition("left")}
-              className={`px-3 py-1 rounded-full text-xs font-mono transition-all duration-300 cursor-pointer ${cardPosition === "left"
-                  ? "bg-white text-neutral-900 font-semibold shadow-sm"
-                  : "text-neutral-500 hover:text-neutral-900"
-                }`}
+              className={`px-3 py-1 rounded-full text-xs font-mono transition-all duration-300 cursor-pointer ${
+                cardPosition === "left"
+                  ? isNight || isEngulfed
+                    ? "bg-slate-800 text-white font-semibold shadow-sm"
+                    : "bg-white text-neutral-900 font-semibold shadow-sm"
+                  : isNight || isEngulfed
+                    ? "text-neutral-400 hover:text-white"
+                    : "text-neutral-500 hover:text-neutral-900"
+              }`}
             >
               Left Align
             </button>
             <button
               type="button"
               onClick={() => switchCardPosition("right")}
-              className={`px-3 py-1 rounded-full text-xs font-mono transition-all duration-300 cursor-pointer ${cardPosition === "right"
-                  ? "bg-white text-neutral-900 font-semibold shadow-sm"
-                  : "text-neutral-500 hover:text-neutral-900"
-                }`}
+              className={`px-3 py-1 rounded-full text-xs font-mono transition-all duration-300 cursor-pointer ${
+                cardPosition === "right"
+                  ? isNight || isEngulfed
+                    ? "bg-slate-800 text-white font-semibold shadow-sm"
+                    : "bg-white text-neutral-900 font-semibold shadow-sm"
+                  : isNight || isEngulfed
+                    ? "text-neutral-400 hover:text-white"
+                    : "text-neutral-500 hover:text-neutral-900"
+              }`}
             >
               Right Align
             </button>
           </div>
         </div>
-        <div className="arch-rule h-px w-full bg-black/[0.08]" />
+        <div className={`arch-rule h-px w-full ${isNight || isEngulfed ? "bg-white/[0.08]" : "bg-black/[0.08]"}`} />
 
         {/* =========================================================================
             SECTION 01: HERO MONOGRAPH CARD (True FLIP glide on align switch)
@@ -1632,6 +1717,7 @@ export default function AboutPage() {
             imageUrl="/placeholder.jpg"
             description="Saswat is an interactive systems designer and creative technologist specializing in real-time WebGL, spatial computing, and physical acoustic interfaces."
             ctaHref="/contact"
+            isNight={isNight || isEngulfed}
             className="my-4 sm:my-8"
           />
         </section>
@@ -1640,7 +1726,7 @@ export default function AboutPage() {
             SECTION 02: THE ARCHITECTURAL MANIFESTO (True 1 : 1.618 Golden Split)
             ========================================================================= */}
         <section data-chapter="02" className="manifesto-section mt-24 py-8">
-          <div className="arch-rule h-px w-full bg-black/[0.1] mb-16" />
+          <div className={`arch-rule h-px w-full ${isNight || isEngulfed ? "bg-white/[0.1]" : "bg-black/[0.1]"} mb-16`} />
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.618fr] gap-12 lg:gap-16 items-start">
             <div>
@@ -1654,20 +1740,24 @@ export default function AboutPage() {
               </div>
 
               <div className="overflow-hidden">
-                <h2 className="heading-reveal font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-[1.08] text-neutral-900">
+                <h2 className={`heading-reveal font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-[1.08] ${
+                  isNight || isEngulfed ? "text-white" : "text-neutral-900"
+                }`}>
                   Crafting Depth in a Flat Digital World.
                 </h2>
               </div>
 
-              <InteractiveMetatronBlueprint />
+              <InteractiveMetatronBlueprint isNight={isNight || isEngulfed} />
             </div>
 
-            <div className="manifesto-copy flex flex-col gap-8 text-neutral-800 font-light leading-relaxed text-lg sm:text-xl lg:text-[1.35rem]">
+            <div className={`manifesto-copy flex flex-col gap-8 font-light leading-relaxed text-lg sm:text-xl lg:text-[1.35rem] ${
+              isNight || isEngulfed ? "text-neutral-200" : "text-neutral-800"
+            }`}>
               <ScrubParagraph text="Modern digital products often surrender to homogeneous templates. My work reclaims the computational canvas as an architectural territory—uniting procedural Three.js geometry, physical resonance, and graphic discipline into seamless interactive journeys." />
 
               <ScrubParagraph text="From mathematical shader simulations to reactive auditory feedback networks, every experience is calculated to reward human curiosity. Technology should not merely present information; it should evoke atmosphere, weight, and timeless poise." />
 
-              <div className="arch-rule h-px w-full bg-black/[0.08] mt-4" />
+              <div className={`arch-rule h-px w-full ${isNight || isEngulfed ? "bg-white/[0.08]" : "bg-black/[0.08]"} mt-4`} />
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-3">
                 <div>
@@ -1675,7 +1765,9 @@ export default function AboutPage() {
                     data-target="8"
                     data-suffix="+"
                     data-pad="true"
-                    className="metric-value font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold text-neutral-900 block tabular-nums"
+                    className={`metric-value font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold block tabular-nums ${
+                      isNight || isEngulfed ? "text-white" : "text-neutral-900"
+                    }`}
                   >
                     08+
                   </span>
@@ -1688,7 +1780,9 @@ export default function AboutPage() {
                     data-target="60"
                     data-suffix=" FPS"
                     data-pad="false"
-                    className="metric-value font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold text-neutral-900 block tabular-nums"
+                    className={`metric-value font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold block tabular-nums ${
+                      isNight || isEngulfed ? "text-white" : "text-neutral-900"
+                    }`}
                   >
                     60 FPS
                   </span>
@@ -1701,7 +1795,9 @@ export default function AboutPage() {
                     data-target="2026"
                     data-suffix=""
                     data-pad="false"
-                    className="metric-value font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold text-neutral-900 block tabular-nums"
+                    className={`metric-value font-['Clash_Display',sans-serif] text-3xl sm:text-4xl lg:text-5xl font-bold block tabular-nums ${
+                      isNight || isEngulfed ? "text-white" : "text-neutral-900"
+                    }`}
                   >
                     2026
                   </span>
@@ -1724,7 +1820,9 @@ export default function AboutPage() {
                 03 / CAPABILITIES
               </span>
               <div className="overflow-hidden">
-                <h2 className="heading-reveal font-['Clash_Display',sans-serif] text-3xl sm:text-4xl font-semibold tracking-tight text-neutral-900">
+                <h2 className={`heading-reveal font-['Clash_Display',sans-serif] text-3xl sm:text-4xl font-semibold tracking-tight ${
+                  isNight || isEngulfed ? "text-white" : "text-neutral-900"
+                }`}>
                   Core Engineering & Design Pillars
                 </h2>
               </div>
@@ -1750,15 +1848,20 @@ export default function AboutPage() {
                   } catch {}
                 }}
                 onMouseLeave={() => setHoveredDiscipline(null)}
-                className="discipline-card group relative overflow-hidden rounded-3xl border border-neutral-200/90 bg-[#faf9f6]/90 backdrop-blur-sm p-7 sm:p-9 hover:bg-white hover:border-[#a6864a]/40 hover:shadow-[0_24px_60px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col justify-between"
+                className={`discipline-card group relative overflow-hidden rounded-3xl border backdrop-blur-sm p-7 sm:p-9 transition-all duration-500 flex flex-col justify-between ${
+                  isNight || isEngulfed
+                    ? "bg-[#090f24]/85 border-slate-800/80 hover:bg-[#0c1433] hover:border-amber-400/40 shadow-[0_20px_50px_rgba(0,0,0,0.45)]"
+                    : "bg-[#faf9f6]/90 border-neutral-200/90 hover:bg-white hover:border-[#a6864a]/40 hover:shadow-[0_24px_60px_rgba(0,0,0,0.06)]"
+                }`}
               >
-                {/* Warm alabaster studio sheen */}
+                {/* Warm studio sheen */}
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                   style={{
-                    background:
-                      "radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(237, 229, 216, 0.45), transparent 65%)",
+                    background: isNight || isEngulfed
+                      ? "radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(99, 102, 241, 0.12), transparent 65%)"
+                      : "radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(237, 229, 216, 0.45), transparent 65%)",
                   }}
                 />
 
@@ -1772,24 +1875,36 @@ export default function AboutPage() {
                     </div>
 
                     {/* Strictly Contained Live Equation Chamber */}
-                    <div className="relative h-44 w-full rounded-2xl bg-white/90 border border-black/[0.06] mb-6 overflow-hidden">
+                    <div className={`relative h-44 w-full rounded-2xl border mb-6 overflow-hidden ${
+                      isNight || isEngulfed ? "bg-[#060a17]/95 border-slate-800" : "bg-white/90 border-black/[0.06]"
+                    }`}>
                       <DisciplineChamber type={item.diagram} hovered={hoveredDiscipline === idx} />
                     </div>
 
-                    <h3 className="font-['Clash_Display',sans-serif] text-xl sm:text-2xl font-medium tracking-tight text-neutral-900 mb-3">
+                    <h3 className={`font-['Clash_Display',sans-serif] text-xl sm:text-2xl font-medium tracking-tight mb-3 ${
+                      isNight || isEngulfed ? "text-white" : "text-neutral-900"
+                    }`}>
                       {item.title}
                     </h3>
 
-                    <p className="text-sm leading-relaxed text-neutral-600 font-light mb-6">
+                    <p className={`text-sm leading-relaxed font-light mb-6 ${
+                      isNight || isEngulfed ? "text-neutral-300" : "text-neutral-600"
+                    }`}>
                       {item.description}
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 pt-4 border-t border-black/[0.06]">
+                  <div className={`flex flex-wrap gap-2 pt-4 border-t ${
+                    isNight || isEngulfed ? "border-slate-800" : "border-black/[0.06]"
+                  }`}>
                     {item.technologies.map((tech) => (
                       <span
                         key={tech}
-                        className="px-2.5 py-1 rounded-full text-[11px] font-mono bg-white border border-neutral-200/90 text-neutral-600 group-hover:border-neutral-900/25 group-hover:text-neutral-900 transition-colors"
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-mono transition-colors ${
+                          isNight || isEngulfed
+                            ? "bg-slate-900/90 border border-slate-700/80 text-neutral-300 group-hover:border-slate-500 group-hover:text-white"
+                            : "bg-white border border-neutral-200/90 text-neutral-600 group-hover:border-neutral-900/25 group-hover:text-neutral-900"
+                        }`}
                       >
                         {tech}
                       </span>
@@ -1810,7 +1925,9 @@ export default function AboutPage() {
               04 / TRAJECTORY
             </span>
             <div className="overflow-hidden">
-              <h2 className="heading-reveal font-['Clash_Display',sans-serif] text-3xl sm:text-4xl font-semibold tracking-tight text-neutral-900">
+              <h2 className={`heading-reveal font-['Clash_Display',sans-serif] text-3xl sm:text-4xl font-semibold tracking-tight ${
+                isNight || isEngulfed ? "text-white" : "text-neutral-900"
+              }`}>
                 Chronicle of Milestones
               </h2>
             </div>
@@ -1820,7 +1937,9 @@ export default function AboutPage() {
             {/* Clean HTML Plumb Spine (Zero SVG aspect-ratio distortion) */}
             <div
               aria-hidden="true"
-              className="hidden md:block absolute left-3 top-0 bottom-0 w-px bg-black/[0.08] pointer-events-none"
+              className={`hidden md:block absolute left-3 top-0 bottom-0 w-px ${
+                isNight || isEngulfed ? "bg-white/[0.08]" : "bg-black/[0.08]"
+              } pointer-events-none`}
             >
               <div
                 ref={spineFillRef}
@@ -1828,11 +1947,15 @@ export default function AboutPage() {
               />
               <span
                 ref={spineNodeRef}
-                className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 size-3 rounded-full border border-[#a6864a] bg-white shadow-[0_0_0_5px_rgba(166,134,74,0.14)]"
+                className={`absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 size-3 rounded-full border border-[#a6864a] ${
+                  isNight || isEngulfed ? "bg-[#090f24]" : "bg-white"
+                } shadow-[0_0_0_5px_rgba(166,134,74,0.14)]`}
               />
             </div>
 
-            <div className="flex flex-col divide-y divide-black/[0.08] border-y border-black/[0.08]">
+            <div className={`flex flex-col divide-y border-y ${
+              isNight || isEngulfed ? "divide-slate-800/80 border-slate-800/80" : "divide-black/[0.08] border-black/[0.08]"
+            }`}>
               {CHRONOLOGY.map((entry, index) => (
                 <div
                   key={index}
@@ -1859,11 +1982,11 @@ export default function AboutPage() {
                   >
                     <path
                       d="M 2 7 Q 12 1 22 7 Q 12 13 2 7 Z"
-                      fill="#ffffff"
+                      fill={isNight || isEngulfed ? "#090f24" : "#ffffff"}
                       stroke="#a6864a"
                       strokeWidth="1.2"
                     />
-                    <circle cx="12" cy="7" r="2.2" fill="#171717" />
+                    <circle cx="12" cy="7" r="2.2" fill={isNight || isEngulfed ? "#fbbf24" : "#171717"} />
                   </svg>
 
                   <div className="chrono-col relative z-10 md:col-span-3">
@@ -1876,15 +1999,21 @@ export default function AboutPage() {
                   </div>
 
                   <div className="chrono-col relative z-10 md:col-span-4">
-                    <h4 className="font-['Clash_Display',sans-serif] text-lg sm:text-xl font-semibold text-neutral-900 group-hover:text-white transition-all duration-300 group-hover:translate-x-1.5">
+                    <h4 className={`font-['Clash_Display',sans-serif] text-lg sm:text-xl font-semibold transition-all duration-300 group-hover:translate-x-1.5 ${
+                      isNight || isEngulfed ? "text-white" : "text-neutral-900"
+                    } group-hover:text-white`}>
                       {entry.role}
                     </h4>
-                    <span className="text-xs font-mono text-neutral-500 mt-0.5 block group-hover:text-neutral-300 transition-all duration-300 group-hover:translate-x-1.5">
+                    <span className={`text-xs font-mono mt-0.5 block transition-all duration-300 group-hover:translate-x-1.5 ${
+                      isNight || isEngulfed ? "text-neutral-400" : "text-neutral-500"
+                    } group-hover:text-neutral-300`}>
                       {entry.studio}
                     </span>
                   </div>
 
-                  <div className="chrono-col relative z-10 md:col-span-5 text-sm font-light text-neutral-600 leading-relaxed group-hover:text-neutral-200 transition-colors duration-300">
+                  <div className={`chrono-col relative z-10 md:col-span-5 text-sm font-light leading-relaxed transition-colors duration-300 ${
+                    isNight || isEngulfed ? "text-neutral-300" : "text-neutral-600"
+                  } group-hover:text-neutral-200`}>
                     {entry.highlight}
                   </div>
                 </div>
