@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import GlassCarousel from "@/components/ui/glass-carousel";
 import FramelessNav from "@/components/ui/frameless-nav";
-import { getSystemTimeTheme } from "@/components/ui/time-clock";
+import ArchitecturalGrid from "@/components/ui/architectural-grid";
+import { useThemeMode } from "@/lib/use-theme-mode";
 import { cozyAudio } from "@/lib/cozy-sound";
-import { Volume2, VolumeX } from "lucide-react";
+import { Sun, Moon, Volume2, VolumeX } from "lucide-react";
 
 const PROJECT_LIST = [
   {
@@ -110,13 +111,7 @@ const PROJECT_LIST = [
 export default function ProjectsPage() {
   const [isMuted, setIsMuted] = useState(false);
   const [isCardFocused, setIsCardFocused] = useState(false);
-  const [systemTheme, setSystemTheme] = useState("sunset");
-
-  useEffect(() => {
-    setSystemTheme(getSystemTimeTheme());
-    const interval = setInterval(() => setSystemTheme(getSystemTimeTheme()), 10000);
-    return () => clearInterval(interval);
-  }, []);
+  const { isNight, toggleTheme, systemTheme } = useThemeMode();
 
   const toggleSound = () => {
     const muted = cozyAudio.toggleMute();
@@ -127,15 +122,26 @@ export default function ProjectsPage() {
   };
 
   return (
-    <main className="projects-minimal-root">
+    <main
+      className="projects-minimal-root transition-colors duration-500"
+      style={{
+        backgroundColor: isNight ? "#060a17" : "#ffffff",
+        color: isNight ? "#f8fafc" : "#171717",
+      }}
+    >
       {/* Astrolabe Celestial Compass Navigation */}
-      <FramelessNav activeTheme={systemTheme} />
+      <FramelessNav activeTheme={isNight ? "night" : systemTheme} />
+
+      {/* Architectural Blueprint Drafting Grid */}
+      <ArchitecturalGrid isNight={isNight} />
 
       {/* Floating Minimal Header */}
       <header className="projects-minimal-header">
         <Link
           href="/"
-          className="brand-logo text-neutral-900 no-underline flex items-center gap-2.5"
+          className={`brand-logo no-underline flex items-center gap-2.5 transition-colors ${
+            isNight ? "text-white" : "text-neutral-900"
+          }`}
           aria-label="Saswat Mohanty Home"
           onClick={() => cozyAudio.playClose()}
         >
@@ -144,15 +150,53 @@ export default function ProjectsPage() {
             alt="Saswat Mohanty Logo"
             className="size-7 sm:size-8 rounded-full object-contain shrink-0"
           />
-          <span className="logo-text hidden sm:inline text-neutral-900 font-['Clash_Display',sans-serif]">Saswat Mohanty</span>
-          <span className="logo-badge hidden sm:inline text-neutral-400 font-mono text-sm ml-1">®</span>
+          <span
+            className={`logo-text hidden sm:inline font-['Clash_Display',sans-serif] ${
+              isNight ? "text-white" : "text-neutral-900"
+            }`}
+          >
+            Saswat Mohanty
+          </span>
+          <span
+            className={`logo-badge hidden sm:inline font-mono text-sm ml-1 ${
+              isNight ? "text-neutral-400" : "text-neutral-500"
+            }`}
+          >
+            ®
+          </span>
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Day / Night Theme Switcher */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className={`projects-minimal-sound px-2.5 py-1.5 sm:px-3.5 sm:py-2 transition-colors ${
+              isNight
+                ? "text-neutral-200 border-white/20 bg-white/5 hover:bg-white/10"
+                : "text-neutral-900 border-neutral-200 bg-white/60 hover:bg-neutral-100"
+            }`}
+            title={isNight ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label="Toggle dark and light mode"
+          >
+            {isNight ? (
+              <Sun className="size-3.5 text-amber-300" />
+            ) : (
+              <Moon className="size-3.5 text-neutral-800" />
+            )}
+            <span className="hidden sm:inline font-mono text-xs">
+              {isNight ? "LIGHT" : "DARK"}
+            </span>
+          </button>
+
           {/* Link to About */}
           <Link
             href="/about"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider text-neutral-600 hover:text-neutral-900 border border-neutral-200 hover:border-neutral-400 bg-white/60 transition-colors"
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider border transition-colors ${
+              isNight
+                ? "text-neutral-300 hover:text-white border-white/20 hover:border-white/40 bg-white/5"
+                : "text-neutral-600 hover:text-neutral-900 border-neutral-200 hover:border-neutral-400 bg-white/60"
+            }`}
             onClick={() => cozyAudio.playSnap(2, 1)}
           >
             <span>About</span>
@@ -162,41 +206,27 @@ export default function ProjectsPage() {
           <button
             type="button"
             onClick={toggleSound}
-            className="projects-minimal-sound text-neutral-900 border-neutral-200 px-2.5 py-1.5 sm:px-3.5 sm:py-2"
+            className={`projects-minimal-sound px-2.5 py-1.5 sm:px-3.5 sm:py-2 transition-colors ${
+              isNight
+                ? "text-neutral-200 border-white/20 bg-white/5 hover:bg-white/10"
+                : "text-neutral-900 border-neutral-200 bg-white/60 hover:bg-neutral-100"
+            }`}
             title={isMuted ? "Enable cozy sound chimes" : "Mute cozy sound chimes"}
             aria-label="Toggle cozy haptic chimes"
           >
             {isMuted ? (
               <VolumeX className="size-3.5 opacity-50" />
             ) : (
-              <Volume2 className="size-3.5 text-neutral-900" />
+              <Volume2
+                className={`size-3.5 ${
+                  isNight ? "text-amber-300" : "text-neutral-900"
+                }`}
+              />
             )}
             <span className="hidden sm:inline font-mono text-xs">
               {isMuted ? "CHIME OFF" : "CHIME ON"}
             </span>
           </button>
-
-          <Link
-            href="/"
-            className="projects-minimal-close bg-neutral-900 hover:bg-black text-white border-neutral-900 px-2.5 py-1.5 sm:px-4 sm:py-2"
-            aria-label="Back to home"
-            onClick={() => cozyAudio.playClose()}
-          >
-            <span className="hidden sm:inline">Close</span>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </Link>
         </div>
       </header>
 
@@ -204,7 +234,7 @@ export default function ProjectsPage() {
       <section className="projects-minimal-stage">
         <GlassCarousel
           items={PROJECT_LIST}
-          theme="white"
+          theme={isNight ? "night" : "white"}
           panelHeight={560}
           className="gc--fullscreen"
           onFocusChange={setIsCardFocused}
@@ -215,7 +245,7 @@ export default function ProjectsPage() {
       <footer
         className={`projects-minimal-footer transition-opacity duration-300 ${
           isCardFocused ? "opacity-0 pointer-events-none" : "opacity-100"
-        }`}
+        } ${isNight ? "text-neutral-400" : "text-neutral-600"}`}
       >
         <span className="footer-hint">← / → keys or drag to glide • click center to focus</span>
         <span className="footer-brand">Saswat Mohanty Studio © 2026</span>
