@@ -978,7 +978,6 @@ function ScrubParagraph({ text, className }) {
 
 export default function AboutPage() {
   const [isMuted, setIsMuted] = useState(false);
-  const [cardPosition, setCardPosition] = useState("left");
   const [activeSection, setActiveSection] = useState("01");
   const [hoveredDiscipline, setHoveredDiscipline] = useState(null);
   const [isEngulfed, setIsEngulfed] = useState(false);
@@ -1011,12 +1010,6 @@ export default function AboutPage() {
     const muted = cozyAudio.toggleMute();
     setIsMuted(muted);
     if (!muted) cozyAudio.playSnap(3, 1);
-  };
-
-  const switchCardPosition = (pos) => {
-    if (pos === cardPosition) return;
-    setCardPosition(pos);
-    cozyAudio.playSnap(pos === "left" ? 1 : 4, 1);
   };
 
   const scrollToChapter = (id) => {
@@ -1646,71 +1639,12 @@ export default function AboutPage() {
           SECTIONS 01 – 04: ARCHITECTURAL EDITORIAL CANVAS
           ========================================================================= */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-28 sm:pt-32 pb-16">
-        {/* Top Editorial Eyebrow & Perspective Switcher */}
-        <div
-          data-chapter="01"
-          className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-mono uppercase tracking-[0.25em] text-neutral-400">
-              01 / IDENTITY & ESSENCE
-            </span>
-            <span className="text-neutral-300">•</span>
-            <span className="text-xs font-mono text-neutral-500">
-              STUDIO PORTRAIT CARD
-            </span>
-          </div>
-
-          <div
-            className={`flex items-center gap-2 self-start sm:self-auto p-1 rounded-full border transition-colors ${
-              isNight || isEngulfed
-                ? "bg-slate-900/80 border-slate-700"
-                : "bg-neutral-100/85 border-neutral-200/70"
-            }`}
-          >
-            <span className="text-[11px] font-mono text-neutral-400 uppercase px-2">
-              Layout:
-            </span>
-            <button
-              type="button"
-              onClick={() => switchCardPosition("left")}
-              className={`px-3 py-1 rounded-full text-xs font-mono transition-all duration-300 cursor-pointer ${
-                cardPosition === "left"
-                  ? isNight || isEngulfed
-                    ? "bg-slate-800 text-white font-semibold shadow-sm"
-                    : "bg-white text-neutral-900 font-semibold shadow-sm"
-                  : isNight || isEngulfed
-                    ? "text-neutral-400 hover:text-white"
-                    : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              Left Align
-            </button>
-            <button
-              type="button"
-              onClick={() => switchCardPosition("right")}
-              className={`px-3 py-1 rounded-full text-xs font-mono transition-all duration-300 cursor-pointer ${
-                cardPosition === "right"
-                  ? isNight || isEngulfed
-                    ? "bg-slate-800 text-white font-semibold shadow-sm"
-                    : "bg-white text-neutral-900 font-semibold shadow-sm"
-                  : isNight || isEngulfed
-                    ? "text-neutral-400 hover:text-white"
-                    : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              Right Align
-            </button>
-          </div>
-        </div>
-        <div className={`arch-rule h-px w-full ${isNight || isEngulfed ? "bg-white/[0.08]" : "bg-black/[0.08]"}`} />
-
         {/* =========================================================================
-            SECTION 01: HERO MONOGRAPH CARD (True FLIP glide on align switch)
+            SECTION 01: HERO MONOGRAPH CARD
             ========================================================================= */}
-        <section className="py-6 sm:py-12 flex justify-center">
+        <section data-chapter="01" className="py-6 sm:py-12 flex justify-center">
           <TeamMemberCard
-            position={cardPosition}
+            position="left"
             firstName="Saswat"
             lastName="Mohanty"
             jobPosition="Spatial Technologist & Creative Director"
