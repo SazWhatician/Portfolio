@@ -964,11 +964,18 @@ function EngulfedAngelicSanctuarySVG({ shockRef }) {
   );
 }
 
-function ScrubParagraph({ text, className }) {
+function ScrubParagraph({ text, isNight = false, className = "" }) {
   return (
     <p className={className}>
       {text.split(" ").map((word, idx) => (
-        <span key={idx} className="manifesto-word inline-block mr-[0.28em] opacity-[0.24]">
+        <span
+          key={idx}
+          className={`manifesto-word inline-block mr-[0.28em] transition-colors duration-500 ${
+            isNight
+              ? "text-neutral-100 opacity-50"
+              : "text-neutral-900 opacity-35"
+          }`}
+        >
           {word}
         </span>
       ))}
@@ -1684,12 +1691,18 @@ export default function AboutPage() {
               <InteractiveMetatronBlueprint isNight={isNight || isEngulfed} />
             </div>
 
-            <div className={`manifesto-copy flex flex-col gap-8 font-light leading-relaxed text-lg sm:text-xl lg:text-[1.35rem] ${
-              isNight || isEngulfed ? "text-neutral-200" : "text-neutral-800"
+            <div className={`manifesto-copy flex flex-col gap-8 font-light leading-relaxed text-lg sm:text-xl lg:text-[1.35rem] transition-colors duration-500 ${
+              isNight || isEngulfed ? "text-neutral-100" : "text-neutral-900"
             }`}>
-              <ScrubParagraph text="Modern digital products often surrender to homogeneous templates. My work reclaims the computational canvas as an architectural territory—uniting procedural Three.js geometry, physical resonance, and graphic discipline into seamless interactive journeys." />
+              <ScrubParagraph
+                text="Modern digital products often surrender to homogeneous templates. My work reclaims the computational canvas as an architectural territory—uniting procedural Three.js geometry, physical resonance, and graphic discipline into seamless interactive journeys."
+                isNight={isNight || isEngulfed}
+              />
 
-              <ScrubParagraph text="From mathematical shader simulations to reactive auditory feedback networks, every experience is calculated to reward human curiosity. Technology should not merely present information; it should evoke atmosphere, weight, and timeless poise." />
+              <ScrubParagraph
+                text="From mathematical shader simulations to reactive auditory feedback networks, every experience is calculated to reward human curiosity. Technology should not merely present information; it should evoke atmosphere, weight, and timeless poise."
+                isNight={isNight || isEngulfed}
+              />
 
               <div className={`arch-rule h-px w-full ${isNight || isEngulfed ? "bg-white/[0.08]" : "bg-black/[0.08]"} mt-4`} />
 
