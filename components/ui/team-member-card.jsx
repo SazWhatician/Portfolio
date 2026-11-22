@@ -51,6 +51,7 @@ export default function TeamMemberCard({
   className,
   ctaHref,
   onCtaClick,
+  isNight = false,
 }) {
   const rootRef = useRef(null);
   const portraitParallaxRef = useRef(null);
@@ -344,14 +345,15 @@ export default function TeamMemberCard({
         <div className="overflow-hidden">
           <p
             className={cn(
-              "tmc-role text-xs font-mono font-medium tracking-[0.3em] text-neutral-400 uppercase select-none",
+              "tmc-role text-xs font-mono font-medium tracking-[0.3em] uppercase select-none",
+              isNight ? "text-neutral-400" : "text-neutral-400",
               isPositionRight ? "text-left md:text-right" : "text-left"
             )}
           >
             {jobPosition}
           </p>
         </div>
-        <div className="tmc-eyebrow-line hidden sm:block h-px flex-1 bg-black/[0.08]" />
+        <div className={cn("tmc-eyebrow-line hidden sm:block h-px flex-1", isNight ? "bg-white/[0.08]" : "bg-black/[0.08]")} />
         <span className="hidden sm:inline-block text-[10px] font-mono tracking-[0.25em] text-[#a6864a] select-none">
           Φ 1.618
         </span>
@@ -392,7 +394,7 @@ export default function TeamMemberCard({
                   cx="220"
                   cy="220"
                   r="182"
-                  stroke="rgba(23,23,23,0.1)"
+                  stroke={isNight ? "rgba(255,255,255,0.14)" : "rgba(23,23,23,0.1)"}
                   strokeWidth="0.8"
                   strokeDasharray="2 7"
                 />
@@ -403,7 +405,7 @@ export default function TeamMemberCard({
                     y1={t.y1}
                     x2={t.x2}
                     y2={t.y2}
-                    stroke={t.major ? "rgba(166,134,74,0.62)" : "rgba(23,23,23,0.18)"}
+                    stroke={t.major ? "rgba(166,134,74,0.62)" : isNight ? "rgba(255,255,255,0.2)" : "rgba(23,23,23,0.18)"}
                     strokeWidth={t.major ? "1.2" : "0.75"}
                   />
                 ))}
@@ -413,7 +415,7 @@ export default function TeamMemberCard({
                 cx="178"
                 cy="220"
                 r={geom.vesicaR}
-                stroke="rgba(23,23,23,0.08)"
+                stroke={isNight ? "rgba(255,255,255,0.12)" : "rgba(23,23,23,0.08)"}
                 strokeWidth="0.85"
                 strokeDasharray={geom.vesicaCirc}
                 strokeDashoffset={geom.vesicaCirc}
@@ -423,7 +425,7 @@ export default function TeamMemberCard({
                 cx="262"
                 cy="220"
                 r={geom.vesicaR}
-                stroke="rgba(23,23,23,0.08)"
+                stroke={isNight ? "rgba(255,255,255,0.12)" : "rgba(23,23,23,0.08)"}
                 strokeWidth="0.85"
                 strokeDasharray={geom.vesicaCirc}
                 strokeDashoffset={geom.vesicaCirc}
@@ -434,7 +436,12 @@ export default function TeamMemberCard({
             {/* Portrait Frame — Strict 1 : 1.618 Golden Proportion */}
             <div
               ref={portraitFrameRef}
-              className="relative z-10 aspect-[1/1.618] w-[270px] sm:w-[300px] md:w-[324px] overflow-hidden rounded-3xl border border-neutral-200/90 bg-neutral-100 shadow-[0_28px_72px_rgba(0,0,0,0.08)] will-change-transform"
+              className={cn(
+                "relative z-10 aspect-[1/1.618] w-[270px] sm:w-[300px] md:w-[324px] overflow-hidden rounded-3xl will-change-transform border",
+                isNight
+                  ? "border-slate-800/90 bg-slate-900 shadow-[0_28px_72px_rgba(0,0,0,0.5)]"
+                  : "border-neutral-200/90 bg-neutral-100 shadow-[0_28px_72px_rgba(0,0,0,0.08)]"
+              )}
             >
               <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
 
@@ -485,12 +492,14 @@ export default function TeamMemberCard({
             )}
           >
             <div>
-              <h1 className="font-['Clash_Display',sans-serif] text-[2.4rem] xs:text-[2.85rem] sm:text-6xl md:text-7xl lg:text-[5.5rem] leading-[1.02] font-extralight tracking-tight text-neutral-900 select-none">
+              <h1 className="font-['Clash_Display',sans-serif] text-[2.4rem] xs:text-[2.85rem] sm:text-6xl md:text-7xl lg:text-[5.5rem] leading-[1.02] font-extralight tracking-tight select-none">
                 <span className="block overflow-hidden py-1 -my-1">
-                  <span className="tmc-name-row block will-change-transform">{firstName}</span>
+                  <span className={cn("tmc-name-row block will-change-transform", isNight ? "text-neutral-100" : "text-neutral-900")}>
+                    {firstName}
+                  </span>
                 </span>
                 <span className="block overflow-hidden py-1 -my-1">
-                  <span className="tmc-name-row block font-semibold text-neutral-900 will-change-transform">
+                  <span className={cn("tmc-name-row block font-semibold will-change-transform", isNight ? "text-white" : "text-neutral-900")}>
                     {lastName}
                   </span>
                 </span>
@@ -513,14 +522,19 @@ export default function TeamMemberCard({
                 <div ref={magneticBtnRef} className="inline-block will-change-transform">
                   <CtaWrapper
                     {...ctaProps}
-                    className="group relative flex h-16 w-16 md:h-20 md:w-20 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white shadow-[0_12px_36px_rgba(0,0,0,0.06)] transition-colors duration-500 hover:bg-neutral-900"
+                    className={cn(
+                      "group relative flex h-16 w-16 md:h-20 md:w-20 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors duration-500",
+                      isNight
+                        ? "bg-slate-900/95 border border-slate-700/80 hover:bg-white text-white hover:text-black shadow-[0_12px_36px_rgba(0,0,0,0.4)]"
+                        : "bg-white shadow-[0_12px_36px_rgba(0,0,0,0.06)] hover:bg-neutral-900 text-neutral-800 hover:text-white"
+                    )}
                   >
                     <svg
                       aria-hidden="true"
                       viewBox="0 0 96 96"
                       className="pointer-events-none absolute -inset-2 h-[calc(100%+16px)] w-[calc(100%+16px)] overflow-hidden"
                     >
-                      <circle cx="48" cy="48" r={geom.ctaR} fill="none" stroke="rgba(23,23,23,0.14)" strokeWidth="1" />
+                      <circle cx="48" cy="48" r={geom.ctaR} fill="none" stroke={isNight ? "rgba(255,255,255,0.2)" : "rgba(23,23,23,0.14)"} strokeWidth="1" />
                       <circle
                         ref={ctaRingRef}
                         cx="48"
@@ -541,14 +555,16 @@ export default function TeamMemberCard({
                       <ArrowRight
                         size={22}
                         className={cn(
-                          "absolute text-neutral-800 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-7 group-hover:-translate-y-7 group-hover:opacity-0",
+                          "absolute transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-7 group-hover:-translate-y-7 group-hover:opacity-0",
+                          isNight ? "text-neutral-200" : "text-neutral-800",
                           isPositionRight && "rotate-180 group-hover:-translate-x-7 group-hover:translate-y-7"
                         )}
                       />
                       <ArrowRight
                         size={22}
                         className={cn(
-                          "absolute text-white -translate-x-7 translate-y-7 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100 -rotate-45",
+                          "absolute -translate-x-7 translate-y-7 opacity-0 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100 -rotate-45",
+                          isNight ? "text-neutral-900 group-hover:text-black" : "text-white",
                           isPositionRight && "translate-x-7 -translate-y-7 rotate-[135deg]"
                         )}
                       />
@@ -565,7 +581,8 @@ export default function TeamMemberCard({
               >
                 <p
                   className={cn(
-                    "text-sm md:text-base leading-[1.8] text-neutral-600 font-light",
+                    "text-sm md:text-base leading-[1.8] font-light",
+                    isNight ? "text-neutral-300" : "text-neutral-600",
                     isPositionRight ? "text-left md:text-right" : "text-left"
                   )}
                 >

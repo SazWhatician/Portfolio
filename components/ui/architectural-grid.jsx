@@ -81,6 +81,7 @@ export default function ArchitecturalGrid({ isNight: isNightProp }) {
   const canvasRef = useRef(null);
   const nightPropRef = useRef(isNightProp);
   nightPropRef.current = isNightProp;
+  const syncThemeRef = useRef(null);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -544,6 +545,7 @@ export default function ArchitecturalGrid({ isNight: isNightProp }) {
       }
       wake();
     };
+    syncThemeRef.current = syncTheme;
 
     if (root.parentElement) {
       observer = new MutationObserver(syncTheme);
@@ -570,7 +572,9 @@ export default function ArchitecturalGrid({ isNight: isNightProp }) {
 
   // Re-sync cleanly if caller passes an explicit isNight prop dynamically
   useEffect(() => {
-    if (typeof isNightProp === "boolean" && rootRef.current) {
+    nightPropRef.current = isNightProp;
+    if (typeof isNightProp === "boolean") {
+      syncThemeRef.current?.();
       window.dispatchEvent(new Event("resize"));
     }
   }, [isNightProp]);

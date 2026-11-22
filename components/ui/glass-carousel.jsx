@@ -237,7 +237,7 @@ export function GlassCarousel({
   cb.current = onActiveChange;
   const focusCb = useRef(onFocusChange);
   focusCb.current = onFocusChange;
-  const bg = theme === "night" ? "#1b1916" : "#ffffff";
+  const bg = theme === "night" ? "#060a17" : "#ffffff";
 
   useEffect(() => {
     const el = host.current,
