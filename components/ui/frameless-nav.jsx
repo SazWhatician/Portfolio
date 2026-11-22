@@ -1081,10 +1081,7 @@ export default function FramelessNav({ activeTheme = "sunset", className = "" })
             const rad = route.fanAngleDeg * DEG;
             const x = STAGE_CX + Math.sin(rad) * FAN_RADIUS;
             const y = Math.cos(rad) * FAN_RADIUS;
-            const isActive =
-              (route.id === "home" && pathname === "/") ||
-              (route.id === "projects" && pathname.startsWith("/projects")) ||
-              (route.id === "about" && pathname.startsWith("/about"));
+            const isActive = idx === activeRouteIdx;
             const isHot = hoveredFanIdx === idx;
 
             return (

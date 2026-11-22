@@ -28,6 +28,7 @@ const bodoni = Bodoni_Moda({
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
   display: "swap",
+  adjustFontFallback: false,
 });
 
 const jakarta = Plus_Jakarta_Sans({
@@ -378,7 +379,7 @@ function TransmissionSuccessSeal({
   return (
     <div ref={wrapRef} className="py-10 sm:py-12 text-center flex flex-col items-center justify-center">
       {/* Self-Drawing Golden Spiral + Vesica Piscis Seal */}
-      <div className="relative size-44 flex items-center justify-center mb-6">
+      <div className="relative size-36 sm:size-44 flex items-center justify-center mb-6">
         <svg viewBox="0 0 200 200" fill="none" className="w-full h-full">
           <g className="seal-orbit-ring">
             <circle
@@ -987,9 +988,9 @@ export default function ContactPage() {
       </div>
 
       {/* 5. Main Aurea Signal Chamber */}
-      <main className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 pt-28 sm:pt-32 pb-24">
+      <main className="relative z-10 max-w-6xl mx-auto px-4 xs:px-6 sm:px-8 lg:px-10 pt-24 sm:pt-28 md:pt-32 pb-16 sm:pb-24">
         {/* EDITORIAL HEADER WITH GHOST NUMERAL + 3D MASKED WORD-BLADES */}
-        <div className="relative max-w-3xl mb-14">
+        <div className="relative max-w-3xl mb-10 sm:mb-14">
           <span
             aria-hidden="true"
             style={{ WebkitTextStroke: `1px ${ghostStroke}`, color: "transparent" }}
@@ -1000,7 +1001,7 @@ export default function ContactPage() {
 
           <div className="relative z-10">
             <div
-              className={`${jetbrains.className} contact-eyebrow inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border text-[10px] font-medium tracking-[0.26em] uppercase mb-5 backdrop-blur-md ${isNight
+              className={`${jetbrains.className} contact-eyebrow inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border text-[10px] font-medium tracking-[0.26em] uppercase mb-4 sm:mb-5 backdrop-blur-md ${isNight
                   ? "border-indigo-400/30 bg-slate-950/75 text-indigo-300"
                   : "border-[#9b3d0b]/25 bg-white/85 text-[#9b3d0b]"
                 }`}
@@ -1011,7 +1012,7 @@ export default function ContactPage() {
 
             <h1
               style={{ perspective: "900px" }}
-              className={`text-[2.45rem] sm:text-[3.7rem] lg:text-[4.6rem] leading-[1.01] mb-6 ${isNight ? "text-white" : "text-neutral-950"
+              className={`text-[2.05rem] xs:text-[2.5rem] sm:text-[3.5rem] md:text-[4.1rem] lg:text-[4.6rem] leading-[1.06] sm:leading-[1.01] mb-5 sm:mb-6 ${isNight ? "text-white" : "text-neutral-950"
                 }`}
             >
               {[
@@ -1036,7 +1037,7 @@ export default function ContactPage() {
                           }`}
                       >
                         {word}
-                        {!isLast ? "\u00A0" : ""}
+                        {!isLast ? " " : ""}
                       </span>
                     </span>
                   );
@@ -1058,11 +1059,11 @@ export default function ContactPage() {
         {/* GOLDEN RATIO 1 : 1.618 (38.2% / 61.8%) WORKSPACE */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.618fr] gap-8 lg:gap-10 items-start">
           {/* LEFT 38.2% COLUMN: HARMONIC OSCILLOSCOPE + COORDINATES */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5 sm:gap-6">
             {/* LIVE HARMONIC SIGNAL CHAMBER VESSEL */}
             <div
               onMouseMove={handleVesselMove}
-              className={`contact-vessel group relative overflow-hidden rounded-3xl border p-6 sm:p-7 backdrop-blur-xl transition-colors duration-500 ${cardSurface}`}
+              className={`contact-vessel group relative overflow-hidden rounded-3xl border p-5 xs:p-6 sm:p-7 backdrop-blur-xl transition-colors duration-500 ${cardSurface}`}
             >
               <div
                 aria-hidden="true"
@@ -1110,7 +1111,7 @@ export default function ContactPage() {
                 <span className={`${jetbrains.className} text-[9px] uppercase tracking-[0.24em] opacity-55 block mb-1.5`}>
                   Direct Inquiries
                 </span>
-                <div className="font-['Clash_Display',sans-serif] text-lg sm:text-xl font-semibold tracking-tight break-all mb-4">
+                <div className="font-['Clash_Display',sans-serif] text-base xs:text-lg sm:text-xl font-semibold tracking-tight break-all mb-4">
                   {TARGET_EMAIL}
                 </div>
 
@@ -1164,7 +1165,7 @@ export default function ContactPage() {
             {/* STUDIO MERIDIAN & LIVE IST ATOMIC CHRONOMETER */}
             <div
               onMouseMove={handleVesselMove}
-              className={`contact-vessel group relative overflow-hidden rounded-3xl border p-6 backdrop-blur-xl space-y-4 text-xs ${cardSurface}`}
+              className={`contact-vessel group relative overflow-hidden rounded-3xl border p-5 xs:p-6 backdrop-blur-xl space-y-4 text-xs ${cardSurface}`}
             >
               <div className="flex items-start gap-3">
                 <MapPin className={`size-4 shrink-0 mt-0.5 ${accentText}`} />
@@ -1212,7 +1213,7 @@ export default function ContactPage() {
             </div>
 
             {/* EXTERNAL PORTALS */}
-            <div className="contact-vessel grid grid-cols-2 gap-3">
+            <div className="contact-vessel grid grid-cols-1 xs:grid-cols-2 gap-2.5 sm:gap-3">
               <a
                 href="https://github.com/SazWhatician"
                 target="_blank"
@@ -1296,7 +1297,7 @@ export default function ContactPage() {
               }}
             />
 
-            <div className="relative z-10 p-7 sm:p-10">
+            <div className="relative z-10 p-5 xs:p-6 sm:p-8 lg:p-10">
               {isSent ? (
                 <TransmissionSuccessSeal
                   isNight={isNight}
@@ -1361,7 +1362,7 @@ export default function ContactPage() {
                                 cozyAudio.playHover?.(i + 4);
                               } catch { }
                             }}
-                            className={`${jetbrains.className} relative z-10 px-3.5 py-2 rounded-full border text-[11px] tracking-[0.06em] transition-colors duration-300 cursor-pointer ${isSelected
+                            className={`${jetbrains.className} relative z-10 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full border text-[10px] sm:text-[11px] tracking-[0.04em] sm:tracking-[0.06em] transition-colors duration-300 cursor-pointer ${isSelected
                                 ? isNight
                                   ? "border-transparent text-slate-950 font-semibold"
                                   : "border-transparent text-[#fcfaf6] font-medium"
@@ -1488,7 +1489,7 @@ export default function ContactPage() {
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onClick={() => fileInputRef.current?.click()}
-                      className={`relative group/drop rounded-2xl border border-dashed p-6 transition-all duration-400 text-center cursor-pointer flex flex-col items-center justify-center overflow-hidden ${isDragging
+                      className={`relative group/drop rounded-2xl border border-dashed p-4 xs:p-5 sm:p-6 transition-all duration-400 text-center cursor-pointer flex flex-col items-center justify-center overflow-hidden ${isDragging
                           ? isNight
                             ? "border-indigo-300 bg-indigo-950/55 scale-[1.015] shadow-[0_0_40px_rgba(165,180,252,0.2)]"
                             : "border-[#9b3d0b] bg-[#f7efe2] scale-[1.015] shadow-[0_0_36px_rgba(155,61,11,0.14)]"
@@ -1507,7 +1508,7 @@ export default function ContactPage() {
                       />
 
                       {/* Concentric Golden-Ratio Rotating Capture Reticle */}
-                      <div className="relative size-16 flex items-center justify-center mb-2.5">
+                      <div className="relative size-14 sm:size-16 flex items-center justify-center mb-2.5">
                         <svg
                           viewBox="0 0 80 80"
                           fill="none"
@@ -1620,11 +1621,11 @@ export default function ContactPage() {
                       <span>Direct uplink → {TARGET_EMAIL}</span>
                     </span>
 
-                    <div ref={magneticSubmitRef} className="inline-block will-change-transform">
+                    <div ref={magneticSubmitRef} className="w-full sm:w-auto inline-block will-change-transform">
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className={`${jetbrains.className} group/btn relative inline-flex items-center justify-center gap-3 px-7 py-3.5 rounded-full text-[11px] font-semibold uppercase tracking-[0.2em] transition-all duration-300 active:scale-95 shadow-lg disabled:opacity-55 cursor-pointer ${isNight
+                        className={`${jetbrains.className} group/btn relative w-full sm:w-auto inline-flex items-center justify-center gap-3 px-7 py-3.5 rounded-full text-[11px] font-semibold uppercase tracking-[0.2em] transition-all duration-300 active:scale-95 shadow-lg disabled:opacity-55 cursor-pointer ${isNight
                             ? "bg-white text-neutral-950 hover:bg-indigo-100"
                             : "bg-neutral-950 text-[#fcfaf6] hover:bg-black"
                           }`}
@@ -1645,7 +1646,7 @@ export default function ContactPage() {
 
         {/* EDITORIAL MONOGRAPH COLOPHON FOOTER */}
         <footer
-          className={`mt-24 pt-8 border-t flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 ${isNight ? "border-slate-800/90" : "border-neutral-900/12"
+          className={`mt-16 sm:mt-24 pt-6 sm:pt-8 border-t flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 ${isNight ? "border-slate-800/90" : "border-neutral-900/12"
             }`}
         >
           <div>
@@ -1658,7 +1659,7 @@ export default function ContactPage() {
             </span>
           </div>
 
-          <div className={`${jetbrains.className} flex flex-wrap items-center gap-x-6 gap-y-2 text-[10px] uppercase tracking-[0.22em] opacity-65`}>
+          <div className={`${jetbrains.className} flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-2 text-[9px] sm:text-[10px] uppercase tracking-[0.2em] sm:tracking-[0.22em] opacity-65`}>
             <span className={`font-semibold opacity-100 ${accentText}`}>Φ 1.61803</span>
             <span>SPATIAL COMPUTING & INTERFACE DESIGN</span>
             <span>NEW DELHI, INDIA</span>

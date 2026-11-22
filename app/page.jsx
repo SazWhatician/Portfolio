@@ -915,10 +915,10 @@ function EditorialHeroMasthead({ activeTheme = "sunset", isNight }) {
       {/* MONUMENTAL MIXED-TYPEFACE MASTHEAD */}
       <h1 className="relative z-10">
         {/* ROW 1: Bold Architectural Clash Display ("SASWAT") + Floating Index Stamp */}
-        <span className="hero-exit-first flex items-end gap-4 sm:gap-6 will-change-transform">
+        <span className="hero-exit-first flex items-end gap-3 sm:gap-6 will-change-transform">
           <span
             style={{ textShadow: palette.textShadow }}
-            className={`font-['Clash_Display',sans-serif] relative inline-flex items-baseline pr-2 py-1 text-[3.1rem] sm:text-[5rem] md:text-[6.2rem] lg:text-[7.4rem] font-semibold uppercase leading-none sm:leading-[0.96] tracking-[0.03em] transition-colors duration-500 ${palette.firstInk}`}
+            className={`font-['Clash_Display',sans-serif] relative inline-flex items-baseline pr-2 py-1 text-[2.65rem] xs:text-[3.1rem] sm:text-[4.8rem] md:text-[6.2rem] lg:text-[7.4rem] font-semibold uppercase leading-none sm:leading-[0.96] tracking-[0.03em] transition-colors duration-500 ${palette.firstInk}`}
           >
             <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
               <span
@@ -972,11 +972,11 @@ function EditorialHeroMasthead({ activeTheme = "sunset", isNight }) {
         </span>
 
         {/* ROW 2: Golden-Indented High-Contrast Bodoni Moda Italic ("Mohanty") + Framed Seal */}
-        <span className="hero-exit-last flex items-start gap-3 sm:gap-4 pl-6 sm:pl-14 md:pl-20 lg:pl-28 mt-1 sm:mt-2 will-change-transform">
+        <span className="hero-exit-last flex items-start gap-2.5 sm:gap-4 pl-3 xs:pl-6 sm:pl-14 md:pl-20 lg:pl-28 mt-1 sm:mt-2 will-change-transform">
           <span
             ref={lastRowRef}
             style={{ letterSpacing: "0.01em", textShadow: palette.textShadow }}
-            className={`${bodoni.className} relative inline-flex items-baseline pr-5 py-1 text-[3.35rem] sm:text-[5.25rem] md:text-[6.5rem] lg:text-[7.75rem] italic font-semibold leading-none sm:leading-[0.98] transition-colors duration-500 ${palette.lastInk}`}
+            className={`${bodoni.className} relative inline-flex items-baseline pr-3 xs:pr-5 py-1 text-[2.85rem] xs:text-[3.35rem] sm:text-[5.1rem] md:text-[6.5rem] lg:text-[7.75rem] italic font-semibold leading-none sm:leading-[0.98] transition-colors duration-500 ${palette.lastInk}`}
           >
             {"Mohanty".split("").map((ch, i) => (
               <span key={i} className="inline-block pr-[0.02em]">
