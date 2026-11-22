@@ -132,11 +132,11 @@ export default function ProjectsPage() {
       {/* Astrolabe Celestial Compass Navigation */}
       <FramelessNav activeTheme={isNight ? "night" : systemTheme} />
 
-      {/* Architectural Blueprint Drafting Grid */}
-      <ArchitecturalGrid isNight={isNight} />
+      {/* Architectural Blueprint Drafting Grid - Below layer */}
+      <ArchitecturalGrid isNight={isNight} className="z-0" />
 
       {/* Floating Minimal Header */}
-      <header className="projects-minimal-header">
+      <header className="projects-minimal-header z-50">
         <Link
           href="/"
           className={`brand-logo no-underline flex items-center gap-2.5 transition-colors ${
@@ -230,8 +230,8 @@ export default function ProjectsPage() {
         </div>
       </header>
 
-      {/* The Single Section Glass Carousel */}
-      <section className="projects-minimal-stage">
+      {/* The Single Section Glass Carousel - Top layer */}
+      <section className="projects-minimal-stage relative z-10">
         <GlassCarousel
           items={PROJECT_LIST}
           theme={isNight ? "night" : "white"}
@@ -243,7 +243,7 @@ export default function ProjectsPage() {
 
       {/* Floating Minimal Footer Hint */}
       <footer
-        className={`projects-minimal-footer transition-opacity duration-300 ${
+        className={`projects-minimal-footer relative z-20 transition-opacity duration-300 ${
           isCardFocused ? "opacity-0 pointer-events-none" : "opacity-100"
         } ${isNight ? "text-neutral-400" : "text-neutral-600"}`}
       >

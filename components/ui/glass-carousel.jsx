@@ -135,8 +135,8 @@ void main(){
   vec2 off = px - c;
   vec2 p = off / uRadius;
   float nd = length(p);
-  vec3 base = texture2D(uScene, vUv).rgb;
-  if (nd > 1.0 || uFx < 0.001) { gl_FragColor = vec4(base, 1.0); return; }
+  vec4 base = texture2D(uScene, vUv);
+  if (nd > 1.0 || uFx < 0.001) { gl_FragColor = base; return; }
   vec2 rd = normalize(off + 1e-4);
   vec2 td = vec2(-rd.y, rd.x);
   float ang = atan(p.y, p.x);
@@ -146,25 +146,30 @@ void main(){
   vec2 bent = px + td * wave * rim * R * 0.32 * uFx;
   vec2 disp = off * 11.0 * 0.004 * smoothstep(0.55, 1.0, nd) * uFx;
   vec3 col = vec3(0.0), w = vec3(0.0);
+  float colAlpha = 0.0;
   for (int i = 0; i < 16; i++) {
     float t = float(i) / 15.0;
-    vec3 s = texture2D(uScene, (bent + disp * (t - 0.5)) / uRes).rgb;
+    vec4 s = texture2D(uScene, (bent + disp * (t - 0.5)) / uRes);
     vec3 k = vec3(exp(-pow(t / 0.38, 2.0)), exp(-pow((t - 0.5) / 0.38, 2.0)), exp(-pow((t - 1.0) / 0.38, 2.0)));
-    col += s * k; w += k;
+    col += s.rgb * k; w += k;
+    colAlpha += s.a * ((k.r + k.g + k.b) / 3.0);
   }
   col /= max(w, vec3(0.001));
+  colAlpha /= max((w.r + w.g + w.b) / 3.0, 0.001);
   col *= mix(0.91, 1.0, smoothstep(0.0, 0.38, nd));
   float r2 = nd * nd * 0.25;
   float gs = 0.12;
-  col += vec3(exp(-r2 / gs) + exp(-r2 / (gs * 7.0)) * 0.18) * 0.07 * uFx;
+  col += vec3(exp(-r2 / gs) + exp(-r2 / (gs * 7.0)) * 0.18) * 0.07 * uFx * clamp(colAlpha * 2.5, 0.0, 1.0);
   float dC = nd * 0.5;
   float ring = exp(-pow((dC - 0.49) / 0.014, 2.0)) * 1.6;
   ring *= mix(1.0, sin(ang * 12.0 + uTime * 3.5) * 0.12 + 0.88, uShimmer);
   float aura = exp(-pow((dC - 0.49) / 0.084, 2.0)) * 0.25;
   col += uRing * (ring + aura) * uFx;
+  colAlpha = clamp(colAlpha + (ring + aura) * 0.5 * uFx, 0.0, 1.0);
   col += vec3(exp(-pow((dC - 0.488) / 0.003, 2.0)) * 1.4) * uFx;
   float a = smoothstep(1.0, 0.93, nd);
-  gl_FragColor = vec4(mix(base, col, a), 1.0);
+  vec4 finalLens = vec4(col, colAlpha);
+  gl_FragColor = mix(base, finalLens, a);
 }`;
 
 function program(gl, vs, fs) {
@@ -245,7 +250,7 @@ export function GlassCarousel({
     if (!el || !cv || !items.length) return;
     const gl = cv.getContext("webgl", {
       antialias: true,
-      alpha: false,
+      alpha: true,
       premultipliedAlpha: false,
     });
     const reduced =
@@ -517,7 +522,7 @@ export function GlassCarousel({
     const render = (now) => {
       gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
       gl.viewport(0, 0, cv.width, cv.height);
-      gl.clearColor(br, bgc, bb, 1);
+      gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.useProgram(qp);
       gl.bindBuffer(gl.ARRAY_BUFFER, quad);
@@ -538,6 +543,9 @@ export function GlassCarousel({
       }
       gl.disable(gl.BLEND);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, cv.width, cv.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
       gl.useProgram(lp);
       const lla = gl.getAttribLocation(lp, "a");
       gl.enableVertexAttribArray(lla);
@@ -982,7 +990,7 @@ export function GlassCarousel({
     <div
       ref={host}
       className={`gc gc--${theme} ${className}`}
-      style={{ background: bg, ...style }}
+      style={{ background: "transparent", ...style }}
       tabIndex={0}
       role="region"
       aria-roledescription="carousel"

@@ -8,7 +8,7 @@
   user-select: none;
   cursor: grab;
   outline: none;
-  background: #1b1916;
+  background: transparent;
 }
 
 .gc--fullscreen {
@@ -17,12 +17,12 @@
 }
 
 .gc--night {
-  background: #060a17;
+  background: transparent;
   color: #f5f2eb;
 }
 
 .gc--white {
-  background: #ffffff;
+  background: transparent;
   color: #0d0d0d;
 }
 

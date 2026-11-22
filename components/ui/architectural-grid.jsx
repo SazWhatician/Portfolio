@@ -76,7 +76,7 @@ function detectDarkParent(el) {
  * Drop-in replacement compatible with <ArchitecturalGrid /> (auto-detects night theme)
  * or explicit <ArchitecturalGrid isNight={isNight} />.
  */
-export default function ArchitecturalGrid({ isNight: isNightProp }) {
+export default function ArchitecturalGrid({ isNight: isNightProp, className = "" }) {
   const rootRef = useRef(null);
   const canvasRef = useRef(null);
   const nightPropRef = useRef(isNightProp);
@@ -583,7 +583,7 @@ export default function ArchitecturalGrid({ isNight: isNightProp }) {
     <div
       ref={rootRef}
       aria-hidden="true"
-      className="fixed inset-0 pointer-events-none z-[4] overflow-hidden select-none"
+      className={`fixed inset-0 pointer-events-none overflow-hidden select-none ${className || "z-0"}`}
     >
       <canvas ref={canvasRef} className="block w-full h-full" />
     </div>
