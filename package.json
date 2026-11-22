@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@barba/core": "^2.10.3",
-    "@theatre/core": "^0.7.2",
     "autoprefixer": "^10.6.2",
     "clsx": "^2.1.1",
     "framer-motion": "^14.14.0",
