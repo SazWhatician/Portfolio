@@ -1264,7 +1264,7 @@ export default function Home() {
         svgOrigin: "24 24",
       });
 
-      // Editorial Gatefold Scroll-Out with Dynamic Kerning Expansion
+      // Editorial Gatefold Scroll-Out with Dynamic Kerning Expansion (Dissolves cleanly before reaching nav compass)
       gsap.to(".hero-exit-first", {
         xPercent: -24,
         letterSpacing: "0.08em",
@@ -1274,7 +1274,7 @@ export default function Home() {
         scrollTrigger: {
           trigger: "#hero",
           start: "top top",
-          end: "bottom 22%",
+          end: "bottom 48%",
           scrub: 0.9,
         },
       });
@@ -1288,7 +1288,7 @@ export default function Home() {
         scrollTrigger: {
           trigger: "#hero",
           start: "top top",
-          end: "bottom 22%",
+          end: "bottom 48%",
           scrub: 0.9,
         },
       });
@@ -1300,7 +1300,7 @@ export default function Home() {
         scrollTrigger: {
           trigger: "#hero",
           start: "top top",
-          end: "bottom 32%",
+          end: "bottom 52%",
           scrub: 0.9,
         },
       });
@@ -1699,7 +1699,7 @@ export default function Home() {
           ========================================================================= */}
       <section
         id="hero"
-        className="story-section hero-section relative z-20 min-h-screen flex flex-col justify-between px-6 sm:px-12 lg:px-16 pt-24 pb-20"
+        className="story-section hero-section relative z-20 min-h-screen flex flex-col justify-between px-5 xs:px-6 sm:px-12 lg:px-16 pt-24 sm:pt-28 pb-16 sm:pb-20"
       >
         {/* Top Header Status Row (Crisp High-Contrast Telemetry) */}
         <div
@@ -1709,7 +1709,7 @@ export default function Home() {
             <ScrambleText text="SPATIAL SYSTEMS & MOTION" triggerOnMount delayMs={260} />
             <span className={`text-[10px] font-semibold tracking-[0.25em] ${accentText}`}>Φ 1.618</span>
           </div>
-          <div className="text-[10px] sm:text-[11px] tracking-[0.22em] text-right">
+          <div className="text-[10px] sm:text-[11px] tracking-[0.22em] text-right ml-auto">
             <ScrambleText text="STUDIO 2026 // NEW DELHI" triggerOnMount delayMs={380} />
           </div>
         </div>

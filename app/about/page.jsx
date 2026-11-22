@@ -1529,11 +1529,11 @@ export default function AboutPage() {
       </nav>
 
       {/* Floating Ergonomic Sound Chime Toggle (No banner bar) */}
-      <div className="fixed top-5 right-6 z-40 pointer-events-auto">
+      <div className="fixed top-3.5 right-4 sm:top-5 sm:right-6 z-40 pointer-events-auto">
         <button
           type="button"
           onClick={toggleSound}
-          className={`inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full border transition-all text-xs font-mono shadow-sm backdrop-blur-md cursor-pointer ${
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full border transition-all text-xs font-mono shadow-sm backdrop-blur-md cursor-pointer ${
             isEngulfed
               ? "border-white/15 text-neutral-200 bg-[#09090b]/80 hover:bg-white/15"
               : "border-neutral-200/90 text-neutral-700 bg-white/85 hover:bg-neutral-100 hover:text-black"

@@ -485,7 +485,7 @@ export default function TeamMemberCard({
             )}
           >
             <div>
-              <h1 className="font-['Clash_Display',sans-serif] text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] leading-[1.02] font-extralight tracking-tight text-neutral-900 select-none">
+              <h1 className="font-['Clash_Display',sans-serif] text-[2.4rem] xs:text-[2.85rem] sm:text-6xl md:text-7xl lg:text-[5.5rem] leading-[1.02] font-extralight tracking-tight text-neutral-900 select-none">
                 <span className="block overflow-hidden py-1 -my-1">
                   <span className="tmc-name-row block will-change-transform">{firstName}</span>
                 </span>

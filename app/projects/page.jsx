@@ -142,13 +142,13 @@ export default function ProjectsPage() {
           <img
             src="/logo-mark.png"
             alt="Saswat Mohanty Logo"
-            className="size-7 rounded-full object-contain shrink-0"
+            className="size-7 sm:size-8 rounded-full object-contain shrink-0"
           />
-          <span className="logo-text text-neutral-900 font-['Clash_Display',sans-serif]">Saswat Mohanty</span>
-          <span className="logo-badge text-neutral-400 font-mono text-sm ml-1">®</span>
+          <span className="logo-text hidden sm:inline text-neutral-900 font-['Clash_Display',sans-serif]">Saswat Mohanty</span>
+          <span className="logo-badge hidden sm:inline text-neutral-400 font-mono text-sm ml-1">®</span>
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Link to About */}
           <Link
             href="/about"
@@ -162,7 +162,7 @@ export default function ProjectsPage() {
           <button
             type="button"
             onClick={toggleSound}
-            className="projects-minimal-sound text-neutral-900 border-neutral-200"
+            className="projects-minimal-sound text-neutral-900 border-neutral-200 px-2.5 py-1.5 sm:px-3.5 sm:py-2"
             title={isMuted ? "Enable cozy sound chimes" : "Mute cozy sound chimes"}
             aria-label="Toggle cozy haptic chimes"
           >
@@ -178,11 +178,11 @@ export default function ProjectsPage() {
 
           <Link
             href="/"
-            className="projects-minimal-close bg-neutral-900 hover:bg-black text-white border-neutral-900"
+            className="projects-minimal-close bg-neutral-900 hover:bg-black text-white border-neutral-900 px-2.5 py-1.5 sm:px-4 sm:py-2"
             aria-label="Back to home"
             onClick={() => cozyAudio.playClose()}
           >
-            <span>Close</span>
+            <span className="hidden sm:inline">Close</span>
             <svg
               width="14"
               height="14"
