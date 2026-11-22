@@ -1027,6 +1027,7 @@ function EditorialHeroMasthead({ activeTheme = "sunset", isNight }) {
    ============================================================================ */
 export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isShipLoaded, setIsShipLoaded] = useState(false);
   const [contributions, setContributions] = useState(
     initialGithubContributions?.contributions || []
   );
@@ -1557,10 +1558,14 @@ export default function Home() {
         }`}
     >
       {/* Fullscreen Liquid Glass Icon Reveal Loader */}
-      <GlassLoader />
+      <GlassLoader isModelLoaded={isShipLoaded} />
 
       {/* 3D WebGL Cloud Voyager Ship Scene with Dynamic Time-of-Day Theme */}
-      <ShipScene scrollProgress={scrollProgress} theme={activeTheme} />
+      <ShipScene
+        scrollProgress={scrollProgress}
+        theme={activeTheme}
+        onLoaded={() => setIsShipLoaded(true)}
+      />
 
       {/* Interactive Chronometer & Atmosphere Controller */}
       <TimeClock

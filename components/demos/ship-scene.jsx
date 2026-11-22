@@ -148,6 +148,8 @@ export default function ShipScene({
   scrollProgress = 0,
   theme = "sunset",
   showDevTools = false,
+  onLoaded,
+  onProgress,
 }) {
   const containerRef = useRef(null);
   const [loading, setLoading] = useState(true);
@@ -353,22 +355,44 @@ export default function ShipScene({
           }
         });
 
+        // Pre-warm render frame so WebGL shaders compile before loader reveal
+        try {
+          renderer.render(scene, camera);
+        } catch {}
+
         setLoading(false);
+        onLoaded?.();
+        if (typeof window !== "undefined") {
+          window.__shipSceneLoaded = true;
+          window.dispatchEvent(new CustomEvent("ship-scene:loaded"));
+        }
       },
       (xhr) => {
         if (xhr.total > 0) {
-          setLoadPercent(Math.round((xhr.loaded / xhr.total) * 100));
+          const pct = Math.round((xhr.loaded / xhr.total) * 100);
+          setLoadPercent(pct);
+          onProgress?.(pct);
         }
       },
       (err) => {
         console.error("Error loading ship_in_clouds.glb:", err);
         setLoading(false);
+        onLoaded?.();
+        if (typeof window !== "undefined") {
+          window.__shipSceneLoaded = true;
+          window.dispatchEvent(new CustomEvent("ship-scene:loaded"));
+        }
       }
     );
 
     const safetyTimer = setTimeout(() => {
       setLoading(false);
-    }, 3500);
+      onLoaded?.();
+      if (typeof window !== "undefined") {
+        window.__shipSceneLoaded = true;
+        window.dispatchEvent(new CustomEvent("ship-scene:loaded"));
+      }
+    }, 4500);
 
     // 11. Mouse Tracking for Parallax (X axis only)
     const handleMouseMove = (e) => {
@@ -643,19 +667,6 @@ export default function ShipScene({
   return (
     <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
       <div ref={containerRef} className="w-full h-full" />
-
-      {/* Loading Screen */}
-      {loading && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#fce7f3] transition-opacity duration-700 pointer-events-auto">
-          <div className="size-12 rounded-full border-2 border-pink-300 border-t-pink-800 animate-spin mb-4" />
-          <span className="text-[11px] font-mono tracking-[0.25em] text-pink-900 uppercase font-semibold">
-            Loading Stratospheric Continuum {loadPercent}%
-          </span>
-          <span className="text-[10px] font-mono text-pink-500 mt-1">
-            23.5 MB • 3D Atmospheric Assets
-          </span>
-        </div>
-      )}
 
       {/* Optional On-Screen Dev Camera Inspector Pill */}
       {showDevTools && (
