@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Cormorant_Garamond } from "next/font/google";
+import { Bodoni_Moda, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -16,15 +16,32 @@ import FramelessNav from "@/components/ui/frameless-nav";
 import { cozyAudio } from "@/lib/cozy-sound";
 import initialGithubContributions from "@/data/github-contributions.json";
 
-const cormorant = Cormorant_Garamond({
+/* ============================================================================
+   ARCHITECTURAL EDITORIAL FONT TRIAD (+ Existing Clash Display)
+   ============================================================================ */
+const bodoni = Bodoni_Moda({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
+  adjustFontFallback: false,
+});
+
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
 const PHI = 1.618033988749895;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // 137.507764°
+const SCRAMBLE_GLYPHS = "ΦΔΩ01618✦·/—ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 const CHAPTERS = [
   { id: "hero", num: "00", label: "Origin" },
@@ -64,6 +81,101 @@ function buildLogSpiral(cx, cy, startTheta, maxTheta, a, steps = 130) {
 function ellipsePerimeter(rx, ry) {
   return Number(
     (Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)))).toFixed(2)
+  );
+}
+
+/* ============================================================================
+   KINETIC TYPOGRAPHY PRIMITIVES
+   1. ScrambleText  — Architectural glyph decoder (mount + hover)
+   2. KineticHeadline — 3D masked word-blade splitter mixing Sans & Bodoni Italic
+   ============================================================================ */
+function ScrambleText({ text, className = "", triggerOnMount = false, delayMs = 300 }) {
+  const [output, setOutput] = useState(text);
+  const rafRef = useRef(0);
+
+  const runDecode = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
+    const chars = text.split("");
+    const totalFrames = Math.max(18, Math.min(34, chars.length * 1.4));
+    let frame = 0;
+
+    const step = () => {
+      frame += 1;
+      const progress = frame / totalFrames;
+      const lockedCount = Math.floor(progress * chars.length);
+
+      const next = chars
+        .map((ch, idx) => {
+          if (ch === " " || ch === "·" || ch === "/" || ch === "✦") return ch;
+          if (idx < lockedCount) return ch;
+          return SCRAMBLE_GLYPHS[Math.floor(Math.random() * SCRAMBLE_GLYPHS.length)];
+        })
+        .join("");
+
+      setOutput(next);
+
+      if (frame < totalFrames) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        setOutput(text);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(step);
+  }, [text]);
+
+  useEffect(() => {
+    setOutput(text);
+    if (!triggerOnMount) return;
+    const timer = setTimeout(runDecode, delayMs);
+    return () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [text, triggerOnMount, delayMs, runDecode]);
+
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+
+  return (
+    <span onMouseEnter={runDecode} className={`inline-block ${className}`}>
+      {output}
+    </span>
+  );
+}
+
+function KineticHeadline({ segments, className = "", accentClass = "" }) {
+  return (
+    <h2
+      style={{ perspective: "900px" }}
+      className={`reveal-heading ${className}`}
+    >
+      {segments.map((seg, sIdx) => {
+        const words = seg.text.split(" ");
+        return words.map((word, wIdx) => {
+          const isSerif = seg.style === "serif";
+          const isAccent = seg.style === "accent";
+          const isLastWord = sIdx === segments.length - 1 && wIdx === words.length - 1;
+          return (
+            <span
+              key={`${sIdx}-${wIdx}`}
+              className="inline-block overflow-hidden align-bottom pb-[0.12em] -mb-[0.12em] pr-[0.06em]"
+            >
+              <span
+                className={`kinetic-word inline-block will-change-transform ${isSerif
+                    ? `${bodoni.className} italic font-medium tracking-[-0.02em] text-[1.06em]`
+                    : isAccent
+                      ? `${bodoni.className} italic font-semibold tracking-[-0.02em] text-[1.08em] ${accentClass}`
+                      : "font-['Clash_Display',sans-serif] font-semibold tracking-[-0.025em]"
+                  }`}
+              >
+                {word}
+                {!isLastWord ? "\u00A0" : ""}
+              </span>
+            </span>
+          );
+        });
+      })}
+    </h2>
   );
 }
 
@@ -141,13 +253,13 @@ function OrbitalVectorsChamber({ isNight }) {
     };
   }, [orbits]);
 
-  const accent = isNight ? "#a5b4fc" : "#a6864a";
-  const ink = isNight ? "rgba(226,232,240,0.28)" : "rgba(23,23,23,0.2)";
+  const accent = isNight ? "#a5b4fc" : "#9a6c27";
+  const ink = isNight ? "rgba(226,232,240,0.28)" : "rgba(23,23,23,0.22)";
 
   return (
     <div
       ref={wrapRef}
-      className={`relative h-36 sm:h-40 w-full rounded-2xl border overflow-hidden mb-7 ${isNight ? "bg-slate-900/55 border-slate-800/90" : "bg-[#faf8f4]/80 border-black/[0.06]"
+      className={`relative h-36 sm:h-40 w-full rounded-2xl border overflow-hidden mb-7 ${isNight ? "bg-slate-900/55 border-slate-800/90" : "bg-[#faf8f4]/85 border-black/[0.08]"
         }`}
     >
       <svg viewBox="0 0 360 150" fill="none" className="w-full h-full overflow-hidden">
@@ -163,8 +275,8 @@ function OrbitalVectorsChamber({ isNight }) {
             ry={o.ry}
             transform={`rotate(${o.tiltDeg} 180 75)`}
             stroke={idx % 2 === 0 ? accent : ink}
-            strokeOpacity={idx % 2 === 0 ? 0.65 : 0.9}
-            strokeWidth={idx === 0 ? "1.1" : "0.9"}
+            strokeOpacity={idx % 2 === 0 ? 0.72 : 0.9}
+            strokeWidth={idx === 0 ? "1.15" : "0.9"}
             strokeDasharray={o.perim}
             strokeDashoffset={o.perim}
             className="sec-draw-path"
@@ -189,7 +301,7 @@ function OrbitalVectorsChamber({ isNight }) {
       </svg>
 
       <div
-        className={`absolute bottom-2.5 left-3.5 right-3.5 flex items-center justify-between text-[9px] font-mono tracking-[0.22em] uppercase pointer-events-none ${isNight ? "text-slate-400" : "text-neutral-400"
+        className={`${jetbrains.className} absolute bottom-2.5 left-3.5 right-3.5 flex items-center justify-between text-[9px] tracking-[0.22em] uppercase pointer-events-none ${isNight ? "text-slate-400" : "text-neutral-500"
           }`}
       >
         <span>Φ⁰ · Φ⁻¹ · Φ⁻² · Φ⁻³</span>
@@ -223,8 +335,8 @@ function OpticalVesicaCrest({ isNight }) {
     return { r, circ, outerR, outerCirc, seeds };
   }, []);
 
-  const accent = isNight ? "#a5b4fc" : "#a6864a";
-  const ink = isNight ? "rgba(226,232,240,0.22)" : "rgba(23,23,23,0.16)";
+  const accent = isNight ? "#a5b4fc" : "#9a6c27";
+  const ink = isNight ? "rgba(226,232,240,0.22)" : "rgba(23,23,23,0.18)";
 
   return (
     <div className="w-full max-w-md mx-auto h-28 mb-4 overflow-hidden">
@@ -257,7 +369,7 @@ function OpticalVesicaCrest({ isNight }) {
           cy="60"
           r={geom.r}
           stroke={accent}
-          strokeOpacity="0.65"
+          strokeOpacity="0.72"
           strokeWidth="1.05"
           strokeDasharray={geom.circ}
           strokeDashoffset={geom.circ}
@@ -268,7 +380,7 @@ function OpticalVesicaCrest({ isNight }) {
           cy="60"
           r={geom.r}
           stroke={accent}
-          strokeOpacity="0.65"
+          strokeOpacity="0.72"
           strokeWidth="1.05"
           strokeDasharray={geom.circ}
           strokeDashoffset={geom.circ}
@@ -278,7 +390,7 @@ function OpticalVesicaCrest({ isNight }) {
         <polygon
           points="210,20.2 233,60 210,99.8 187,60"
           stroke={isNight ? "#f8fafc" : "#171717"}
-          strokeOpacity="0.38"
+          strokeOpacity="0.4"
           strokeWidth="0.85"
         />
 
@@ -324,13 +436,13 @@ function FresnelShaderChamber({ isNight }) {
     };
   }, []);
 
-  const accent = isNight ? "#a5b4fc" : "#a6864a";
+  const accent = isNight ? "#a5b4fc" : "#9a6c27";
   const primary = isNight ? "#f8fafc" : "#171717";
-  const faint = isNight ? "rgba(226,232,240,0.22)" : "rgba(23,23,23,0.16)";
+  const faint = isNight ? "rgba(226,232,240,0.22)" : "rgba(23,23,23,0.18)";
 
   return (
     <div
-      className={`relative h-36 sm:h-40 w-full rounded-2xl border overflow-hidden mb-7 ${isNight ? "bg-slate-900/55 border-slate-800/90" : "bg-[#faf8f4]/80 border-black/[0.06]"
+      className={`relative h-36 sm:h-40 w-full rounded-2xl border overflow-hidden mb-7 ${isNight ? "bg-slate-900/55 border-slate-800/90" : "bg-[#faf8f4]/85 border-black/[0.08]"
         }`}
     >
       <svg viewBox="0 0 360 150" fill="none" className="w-full h-full overflow-hidden">
@@ -341,7 +453,7 @@ function FresnelShaderChamber({ isNight }) {
           x2="22"
           y2="134"
           stroke={accent}
-          strokeOpacity="0.45"
+          strokeOpacity="0.5"
           strokeWidth="0.9"
           strokeDasharray="2 3"
           className="fresnel-scanline"
@@ -350,7 +462,7 @@ function FresnelShaderChamber({ isNight }) {
         <path
           d={waves.w1.d}
           stroke={primary}
-          strokeOpacity="0.8"
+          strokeOpacity="0.82"
           strokeWidth="1.25"
           strokeDasharray={waves.w1.len}
           strokeDashoffset={waves.w1.len}
@@ -379,7 +491,7 @@ function FresnelShaderChamber({ isNight }) {
       </svg>
 
       <div
-        className={`absolute bottom-2.5 left-3.5 right-3.5 flex items-center justify-between text-[9px] font-mono tracking-[0.22em] uppercase pointer-events-none ${isNight ? "text-slate-400" : "text-neutral-400"
+        className={`${jetbrains.className} absolute bottom-2.5 left-3.5 right-3.5 flex items-center justify-between text-[9px] tracking-[0.22em] uppercase pointer-events-none ${isNight ? "text-slate-400" : "text-neutral-500"
           }`}
       >
         <span>F(θ) = F₀ + (1−F₀)(1−cosθ)⁵</span>
@@ -474,13 +586,13 @@ function GoldenPolyhedronMiniCanvas({ isNight, hovered }) {
       const cy = h / 2;
       const R = Math.min(w, h) * 0.37;
 
-      const accent = night ? "rgba(165,180,252,0.75)" : "rgba(166,134,74,0.75)";
-      const frontStroke = night ? "rgba(248,250,252,0.82)" : "rgba(23,23,23,0.78)";
+      const accent = night ? "rgba(165,180,252,0.78)" : "rgba(154,108,39,0.82)";
+      const frontStroke = night ? "rgba(248,250,252,0.85)" : "rgba(23,23,23,0.8)";
       const backStroke = night ? "rgba(148,163,184,0.2)" : "rgba(23,23,23,0.16)";
 
       ctx.beginPath();
       ctx.arc(cx, cy, R * 1.15, 0, Math.PI * 2);
-      ctx.strokeStyle = night ? "rgba(165,180,252,0.18)" : "rgba(166,134,74,0.22)";
+      ctx.strokeStyle = night ? "rgba(165,180,252,0.18)" : "rgba(154,108,39,0.24)";
       ctx.lineWidth = 0.85;
       ctx.setLineDash([3, 5]);
       ctx.stroke();
@@ -580,7 +692,7 @@ function ShowcaseMicroDiagram({ type, isNight }) {
     return { seeds };
   }, [type]);
 
-  const accent = isNight ? "#a5b4fc" : "#a6864a";
+  const accent = isNight ? "#a5b4fc" : "#9a6c27";
   const faint = isNight ? "rgba(226,232,240,0.2)" : "rgba(23,23,23,0.16)";
 
   if (type === "aura") {
@@ -614,252 +726,296 @@ function ShowcaseMicroDiagram({ type, isNight }) {
 }
 
 /* ============================================================================
-   HAUTE-COUTURE EDITORIAL HERO SIGNATURE ("Saswat MOHANTY")
+   MONUMENTAL KINETIC EDITORIAL HERO MASTHEAD ("SASWAT / Mohanty")
+   - Clash Display Architectural Sans + High-Contrast Bodoni Moda Italic
+   - Live Gaussian Proximity Glyph-Wave Physics on Pointer Sweep
+   - 4-Theme Contrast Engineering (Always Razor-Legible Over 3D Clouds & Sky)
    ============================================================================ */
-function CoutureHeroSignature({ isNight }) {
+function EditorialHeroMasthead({ activeTheme = "sunset", isNight }) {
   const wrapRef = useRef(null);
-  const lastRowRef = useRef(null);
+  const firstGlyphRefs = useRef([]);
+  const lastGlyphRefs = useRef([]);
   const starRef = useRef(null);
   const shimmerRef = useRef(null);
+  const lastRowRef = useRef(null);
 
-  const swash = useMemo(() => {
-    const p0 = [10, 128];
-    const p1 = [145, 18];
-    const p2 = [395, 146];
-    const p3 = [548, 36];
-
-    let len = 0;
-    let px = p0[0];
-    let py = p0[1];
-    const steps = 100;
-
-    for (let i = 1; i <= steps; i++) {
-      const t = i / steps;
-      const mt = 1 - t;
-      const x =
-        mt * mt * mt * p0[0] +
-        3 * mt * mt * t * p1[0] +
-        3 * mt * t * t * p2[0] +
-        t * t * t * p3[0];
-      const y =
-        mt * mt * mt * p0[1] +
-        3 * mt * mt * t * p1[1] +
-        3 * mt * t * t * p2[1] +
-        t * t * t * p3[1];
-      len += Math.hypot(x - px, y - py);
-      px = x;
-      py = y;
+  // High-contrast ink & atmospheric veil palette tuned to every ShipScene sky
+  const palette = useMemo(() => {
+    if (isNight || activeTheme === "night") {
+      return {
+        accentHex: "#c7d2fe",
+        accentText: "text-indigo-200",
+        firstInk: "text-white",
+        lastInk: "text-[#e9edff]",
+        subInk: "text-slate-100",
+        mutedInk: "text-slate-300",
+        ruleBg: "bg-indigo-300/80",
+        dividerBg: "bg-indigo-200/25",
+        chip: "border-indigo-300/45 bg-[#060a17]/78 text-indigo-100",
+        shimmer: "from-transparent via-indigo-200/40 to-transparent",
+        strokeColor: "rgba(199, 210, 254, 0.22)",
+        textShadow: "none",
+        subShadow: "none",
+        scrim:
+          "radial-gradient(ellipse 84% 78% at 32% 58%, rgba(4, 7, 20, 0.72) 0%, rgba(4, 7, 20, 0.34) 56%, transparent 82%)",
+      };
     }
 
+    if (activeTheme === "sunset") {
+      return {
+        accentHex: "#9b3d0b",
+        accentText: "text-[#9b3d0b]",
+        firstInk: "text-[#110905]",
+        lastInk: "text-[#261107]",
+        subInk: "text-[#1d0f08]",
+        mutedInk: "text-[#3a2013]",
+        ruleBg: "bg-[#9b3d0b]",
+        dividerBg: "bg-[#261107]/28",
+        chip: "border-[#9b3d0b]/55 bg-[#fff8ee]/86 text-[#1d0f08]",
+        shimmer: "from-transparent via-[#fff3da]/75 to-transparent",
+        strokeColor: "rgba(155, 61, 11, 0.2)",
+        textShadow: "none",
+        subShadow: "none",
+        scrim: "transparent",
+      };
+    }
+
+    // morning / afternoon
     return {
-      d: `M ${p0[0]} ${p0[1]} C ${p1[0]} ${p1[1]}, ${p2[0]} ${p2[1]}, ${p3[0]} ${p3[1]}`,
-      length: Number(len.toFixed(2)),
+      accentHex: "#875311",
+      accentText: "text-[#875311]",
+      firstInk: "text-[#090c12]",
+      lastInk: "text-[#161c28]",
+      subInk: "text-[#111622]",
+      mutedInk: "text-[#2b3344]",
+      ruleBg: "bg-[#875311]",
+      dividerBg: "bg-[#090c12]/22",
+      chip: "border-[#875311]/55 bg-white/88 text-[#090c12]",
+      shimmer: "from-transparent via-white/80 to-transparent",
+      strokeColor: "rgba(135, 83, 17, 0.2)",
+      textShadow: "none",
+      subShadow: "none",
+      scrim: "transparent",
     };
-  }, []);
+  }, [activeTheme, isNight]);
 
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
+  // Live Gaussian Proximity Glyph-Wave Physics across both name rows
+  const handleMastheadMove = (e) => {
+    const mx = e.clientX;
+    const my = e.clientY;
+    const radius = 150;
 
-    const ctx = gsap.context(() => {
-      const onEnter = () => {
-        if (lastRowRef.current) {
-          gsap.to(lastRowRef.current, {
-            letterSpacing: "0.24em",
-            duration: 0.75,
-            ease: "expo.out",
-          });
-        }
-        if (starRef.current) {
-          gsap.to(starRef.current, {
-            rotation: "+=135",
-            scale: 1.25,
-            duration: 0.85,
-            ease: "expo.out",
-            transformOrigin: "50% 50%",
-          });
-        }
-        if (shimmerRef.current) {
-          gsap.fromTo(
-            shimmerRef.current,
-            { xPercent: -120, opacity: 0 },
-            { xPercent: 140, opacity: 0.7, duration: 1.05, ease: "power2.inOut" }
-          );
-        }
-      };
+    const applyWave = (nodes, ampY, ampRot) => {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        if (!node) continue;
+        const r = node.getBoundingClientRect();
+        const cx = r.left + r.width * 0.5;
+        const cy = r.top + r.height * 0.5;
+        const dx = mx - cx;
+        const dy = my - cy;
+        const dist = Math.hypot(dx, dy);
 
-      const onLeave = () => {
-        if (lastRowRef.current) {
-          gsap.to(lastRowRef.current, {
-            letterSpacing: "0.18em",
-            duration: 0.75,
+        if (dist < radius) {
+          const gauss = Math.exp(-(dist * dist) / (2 * 62 * 62));
+          gsap.to(node, {
+            y: -ampY * gauss,
+            rotateZ: -(dx / radius) * ampRot * gauss,
+            scale: 1 + 0.055 * gauss,
+            duration: 0.36,
             ease: "power3.out",
+            overwrite: "auto",
           });
-        }
-        if (starRef.current) {
-          gsap.to(starRef.current, {
+        } else {
+          gsap.to(node, {
+            y: 0,
+            rotateZ: 0,
             scale: 1,
-            duration: 0.65,
-            ease: "power3.out",
-            transformOrigin: "50% 50%",
+            duration: 0.55,
+            ease: "elastic.out(1, 0.65)",
+            overwrite: "auto",
           });
         }
-      };
+      }
+    };
 
-      el.addEventListener("mouseenter", onEnter);
-      el.addEventListener("mouseleave", onLeave);
-      return () => {
-        el.removeEventListener("mouseenter", onEnter);
-        el.removeEventListener("mouseleave", onLeave);
-      };
-    }, wrapRef);
+    applyWave(firstGlyphRefs.current, 11, 5.5);
+    applyWave(lastGlyphRefs.current, 9, 4.5);
+  };
 
-    return () => ctx.revert();
-  }, []);
+  const handleMastheadEnter = () => {
+    if (lastRowRef.current) {
+      gsap.to(lastRowRef.current, { letterSpacing: "0.05em", duration: 0.7, ease: "expo.out" });
+    }
+    if (starRef.current) {
+      gsap.to(starRef.current, {
+        rotation: "+=135",
+        scale: 1.25,
+        duration: 0.85,
+        ease: "expo.out",
+        transformOrigin: "50% 50%",
+      });
+    }
+    if (shimmerRef.current) {
+      gsap.fromTo(
+        shimmerRef.current,
+        { xPercent: -120, opacity: 0 },
+        { xPercent: 145, opacity: 0.85, duration: 0.95, ease: "power2.inOut" }
+      );
+    }
+  };
 
-  const accentHex = isNight ? "#a5b4fc" : "#a6864a";
-  const accentText = isNight ? "text-indigo-300" : "text-[#a6864a]";
+  const handleMastheadLeave = () => {
+    const all = [...firstGlyphRefs.current, ...lastGlyphRefs.current].filter(Boolean);
+    gsap.to(all, {
+      y: 0,
+      rotateZ: 0,
+      scale: 1,
+      duration: 0.72,
+      ease: "elastic.out(1, 0.58)",
+      overwrite: "auto",
+    });
+    if (lastRowRef.current) {
+      gsap.to(lastRowRef.current, { letterSpacing: "0.01em", duration: 0.7, ease: "power3.out" });
+    }
+    if (starRef.current) {
+      gsap.to(starRef.current, { scale: 1, duration: 0.6, ease: "power3.out" });
+    }
+  };
 
   return (
     <div
       ref={wrapRef}
-      className="hero-identity-container relative max-w-3xl text-left select-none pointer-events-auto cursor-default"
+      onMouseMove={handleMastheadMove}
+      onMouseEnter={handleMastheadEnter}
+      onMouseLeave={handleMastheadLeave}
+      className="hero-identity-container relative max-w-4xl text-left select-none pointer-events-auto cursor-default"
     >
-      {/* Calligraphic Couture Ribbon */}
-      <svg
+      {/* Edge-less Feathered Contrast Veil (Guaranteed Crisp Contrast Over Any Cloud/Sky) */}
+      <div
         aria-hidden="true"
-        viewBox="0 0 560 160"
-        fill="none"
-        className="hero-exit-meta pointer-events-none absolute -top-2 -left-4 w-[108%] max-w-[600px] h-auto z-0 overflow-hidden opacity-80"
-      >
-        <path
-          d={swash.d}
-          stroke={accentHex}
-          strokeOpacity={isNight ? "0.35" : "0.4"}
-          strokeWidth="0.95"
-          strokeDasharray={swash.length}
-          strokeDashoffset={swash.length}
-          className="hero-couture-arc"
-        />
-        <circle cx="10" cy="128" r="2" fill={accentHex} fillOpacity="0.6" />
-        <circle cx="548" cy="36" r="2" fill={accentHex} fillOpacity="0.6" />
-      </svg>
+        className="hero-exit-meta pointer-events-none absolute -inset-x-12 -inset-y-10 z-0 transition-all duration-700"
+        style={{ background: palette.scrim }}
+      />
 
-      {/* Top Atelier Eyebrow Stamp */}
-      <div className="hero-exit-meta hero-sub-reveal relative z-10 flex items-center gap-3 mb-2 sm:mb-3">
-        <span
-          className={`hero-couture-rule block h-px w-8 sm:w-12 origin-left ${isNight ? "bg-indigo-400/70" : "bg-[#a6864a]/80"
-            }`}
-        />
-        <span
-          className={`text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.38em] ${isNight ? "text-slate-400" : "text-neutral-500"
-            }`}
-        >
-          Atelier · Edition XXVI
+      {/* Precision Top Architectural Eyebrow + Coordinates */}
+      <div
+        style={{ textShadow: palette.subShadow }}
+        className={`${jetbrains.className} hero-exit-meta hero-sub-reveal relative z-10 flex flex-wrap items-center gap-3 mb-3 sm:mb-4`}
+      >
+        <span className={`hero-couture-rule block h-[2px] w-9 sm:w-12 origin-left ${palette.ruleBg}`} />
+        <span className={`text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.32em] ${palette.subInk}`}>
+          <ScrambleText text="MONOGRAPH // EDITION XXVI" triggerOnMount delayMs={420} />
+        </span>
+        <span className={`hidden sm:inline-block text-[10px] tracking-[0.22em] opacity-75 ${palette.accentText}`}>
+          [28.61°N · 77.20°E]
         </span>
       </div>
 
-      {/* HAUTE-COUTURE ASYMMETRICAL MASTHEAD */}
+      {/* MONUMENTAL MIXED-TYPEFACE MASTHEAD */}
       <h1 className="relative z-10">
-        {/* ROW 1: Sweeping High-Contrast Didone Italic Serif ("Saswat") */}
-        <span className="hero-exit-first flex items-center gap-4 sm:gap-6 will-change-transform">
+        {/* ROW 1: Bold Architectural Clash Display ("SASWAT") + Floating Index Stamp */}
+        <span className="hero-exit-first flex items-end gap-4 sm:gap-6 will-change-transform">
           <span
-            className={`${cormorant.className} relative inline-flex items-baseline overflow-hidden pl-2 -ml-2 pr-4 pb-2 -mb-2 text-[4.3rem] sm:text-[6.4rem] md:text-[7.6rem] lg:text-[9rem] font-light italic leading-[0.84] tracking-[-0.03em] transition-colors duration-500 ${isNight
-                ? "text-white drop-shadow-[0_6px_36px_rgba(0,0,0,0.75)]"
-                : "text-[#111111]"
-              }`}
+            style={{ textShadow: palette.textShadow }}
+            className={`font-['Clash_Display',sans-serif] relative inline-flex items-baseline pr-2 py-1 text-[3.1rem] sm:text-[5rem] md:text-[6.2rem] lg:text-[7.4rem] font-semibold uppercase leading-none sm:leading-[0.96] tracking-[0.03em] transition-colors duration-500 ${palette.firstInk}`}
           >
-            <span
-              ref={shimmerRef}
-              aria-hidden="true"
-              className={`pointer-events-none absolute inset-y-0 w-1/3 -skew-x-12 opacity-0 blur-md ${isNight
-                  ? "bg-gradient-to-r from-transparent via-indigo-200/35 to-transparent"
-                  : "bg-gradient-to-r from-transparent via-[#e8d5b0]/55 to-transparent"
-                }`}
-            />
-
-            {"Saswat".split("").map((ch, i) => (
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
               <span
-                key={i}
-                className={`hero-enter-char inline-block will-change-transform ${i === 0 ? `text-[1.08em] font-normal ${accentText}` : ""
-                  }`}
-              >
-                {ch}
+                ref={shimmerRef}
+                className={`absolute inset-y-0 w-1/3 -skew-x-12 opacity-0 blur-md bg-gradient-to-r ${palette.shimmer}`}
+              />
+            </span>
+
+            {"SASWAT".split("").map((ch, i) => (
+              <span key={i} className="inline-block">
+                <span
+                  ref={(el) => {
+                    firstGlyphRefs.current[i] = el;
+                  }}
+                  className={`hero-enter-char inline-block will-change-transform ${i === 0 ? palette.accentText : ""
+                    }`}
+                >
+                  {ch}
+                </span>
               </span>
             ))}
           </span>
 
-          {/* Editorial Shoulder Hairline + 4-Point Atelier Star */}
-          <span className="hero-sub-reveal hidden sm:inline-flex items-center gap-2.5 self-center mt-2">
-            <span
-              className={`hero-couture-rule block h-px w-10 md:w-16 origin-left ${isNight ? "bg-slate-700" : "bg-neutral-300"
-                }`}
-            />
-            <svg
-              ref={starRef}
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="size-4 overflow-hidden will-change-transform"
-            >
-              <path
-                d="M12 1 C12.4 8.2 15.8 11.6 23 12 C15.8 12.4 12.4 15.8 12 23 C11.6 15.8 8.2 12.4 1 12 C8.2 11.6 11.6 8.2 12 1 Z"
-                fill={accentHex}
-              />
-            </svg>
-            <span
-              className={`text-[10px] font-mono tracking-[0.26em] ${isNight ? "text-slate-400" : "text-neutral-400"
-                }`}
-            >
-              Φ 1.618
+          {/* Editorial Shoulder Spec Stamp */}
+          <span
+            style={{ textShadow: palette.subShadow }}
+            className={`${jetbrains.className} hero-sub-reveal hidden md:inline-flex flex-col items-start gap-1 pb-2.5 shrink-0`}
+          >
+            <span className="inline-flex items-center gap-2">
+              <span className={`hero-couture-rule block h-px w-10 origin-left ${palette.dividerBg}`} />
+              <svg
+                ref={starRef}
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="size-3.5 overflow-hidden will-change-transform"
+              >
+                <path
+                  d="M12 1 C12.4 8.2 15.8 11.6 23 12 C15.8 12.4 12.4 15.8 12 23 C11.6 15.8 8.2 12.4 1 12 C8.2 11.6 11.6 8.2 12 1 Z"
+                  fill={palette.accentHex}
+                />
+              </svg>
+              <span className={`text-[10px] font-semibold tracking-[0.26em] ${palette.accentText}`}>
+                Φ 1.618
+              </span>
+            </span>
+            <span className={`text-[9px] uppercase tracking-[0.26em] ${palette.mutedInk}`}>
+              CREATIVE ENGINEER
             </span>
           </span>
         </span>
 
-        {/* ROW 2: Golden-Section Indented Wide-Tracked Architectural Display ("MOHANTY") */}
-        <span className="hero-exit-last flex items-start gap-2.5 sm:gap-3 pl-7 sm:pl-14 md:pl-20 lg:pl-24 -mt-1 sm:-mt-3 will-change-transform">
+        {/* ROW 2: Golden-Indented High-Contrast Bodoni Moda Italic ("Mohanty") + Framed Seal */}
+        <span className="hero-exit-last flex items-start gap-3 sm:gap-4 pl-6 sm:pl-14 md:pl-20 lg:pl-28 mt-1 sm:mt-2 will-change-transform">
           <span
             ref={lastRowRef}
-            style={{ letterSpacing: "0.18em" }}
-            className={`font-['Clash_Display',sans-serif] inline-flex overflow-hidden py-1 text-[2.15rem] sm:text-[3.4rem] md:text-[4.25rem] lg:text-[5rem] font-light uppercase leading-[0.95] transition-colors duration-500 ${isNight
-                ? "text-slate-100 drop-shadow-[0_4px_28px_rgba(0,0,0,0.8)]"
-                : "text-neutral-900"
-              }`}
+            style={{ letterSpacing: "0.01em", textShadow: palette.textShadow }}
+            className={`${bodoni.className} relative inline-flex items-baseline pr-5 py-1 text-[3.35rem] sm:text-[5.25rem] md:text-[6.5rem] lg:text-[7.75rem] italic font-semibold leading-none sm:leading-[0.98] transition-colors duration-500 ${palette.lastInk}`}
           >
-            {"MOHANTY".split("").map((ch, i) => (
-              <span key={i} className="hero-enter-char inline-block will-change-transform">
-                {ch}
+            {"Mohanty".split("").map((ch, i) => (
+              <span key={i} className="inline-block pr-[0.02em]">
+                <span
+                  ref={(el) => {
+                    lastGlyphRefs.current[i] = el;
+                  }}
+                  className="hero-enter-char inline-block will-change-transform"
+                >
+                  {ch}
+                </span>
               </span>
             ))}
           </span>
 
-          {/* Framed Circular Maison ® Seal */}
+          {/* Architectural Edition Pill Seal */}
           <span
-            className={`hero-title-badge mt-1 sm:mt-2 inline-flex size-6 sm:size-8 shrink-0 items-center justify-center rounded-full border text-[10px] sm:text-xs font-mono ${isNight
-                ? "border-indigo-400/50 text-indigo-300 bg-slate-950/60"
-                : "border-[#a6864a]/50 text-[#a6864a] bg-white/70"
-              }`}
+            className={`${jetbrains.className} hero-title-badge mt-2 sm:mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[9px] sm:text-[10px] font-semibold tracking-[0.2em] backdrop-blur-md shrink-0 ${palette.chip}`}
           >
-            ®
+            <span className={palette.accentText}>®</span>
+            <span className="hidden sm:inline">26</span>
           </span>
         </span>
       </h1>
 
-      {/* Editorial Colophon Credentials Bar */}
-      <div className="hero-exit-meta hero-sub-reveal relative z-10 mt-6 sm:mt-7 pt-4">
+      {/* Structured Editorial Colophon Strip */}
+      <div
+        style={{ textShadow: palette.subShadow }}
+        className="hero-exit-meta hero-sub-reveal relative z-10 mt-5 sm:mt-6 pt-3.5"
+      >
+        <div className={`hero-couture-rule h-px w-full max-w-lg mb-3.5 origin-left ${palette.dividerBg}`} />
         <div
-          className={`hero-couture-rule h-px w-full max-w-md mb-3.5 origin-left ${isNight ? "bg-slate-800" : "bg-neutral-200/90"
-            }`}
-        />
-        <div
-          className={`flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] sm:text-xs font-mono tracking-[0.24em] uppercase ${isNight ? "text-slate-400" : "text-neutral-500"
-            }`}
+          className={`${jetbrains.className} flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[10px] sm:text-[11px] font-medium tracking-[0.22em] uppercase ${palette.subInk}`}
         >
-          <span>Spatial Computing</span>
-          <span className={`text-[9px] ${accentText}`}>✦</span>
-          <span>Interactive Systems</span>
-          <span className={`text-[9px] ${accentText}`}>✦</span>
-          <span>WebGL Direction</span>
+          <ScrambleText text="SPATIAL COMPUTING" triggerOnMount delayMs={620} />
+          <span className={`text-[9px] ${palette.accentText}`}>✦</span>
+          <ScrambleText text="INTERACTIVE SYSTEMS" triggerOnMount delayMs={780} />
+          <span className={`text-[9px] ${palette.accentText}`}>✦</span>
+          <ScrambleText text="WEBGL DIRECTION" triggerOnMount delayMs={940} />
         </div>
       </div>
     </div>
@@ -885,6 +1041,7 @@ export default function Home() {
   const hudAngleRef = useRef(null);
   const hudPctRef = useRef(null);
   const magneticCtaRef = useRef(null);
+  const marqueeTrackRef = useRef(null);
 
   const pageSpirals = useMemo(() => {
     const hud = buildLogSpiral(28, 28, 0, Math.PI * 3.1, 1.35, 90);
@@ -997,7 +1154,7 @@ export default function Home() {
     gsap.ticker.lagSmoothing(0);
 
     const ctx = gsap.context(() => {
-      // 2. Global Scroll Progress Tracker
+      // 1. Global Scroll Progress + Velocity-Reactive Typographic Ribbon
       ScrollTrigger.create({
         trigger: mainRef.current,
         start: "top top",
@@ -1021,10 +1178,19 @@ export default function Home() {
           if (hudPctRef.current) {
             hudPctRef.current.textContent = `${String(Math.round(p * 100)).padStart(2, "0")}%`;
           }
+          if (marqueeTrackRef.current) {
+            const skew = Math.max(-7, Math.min(7, self.getVelocity() / 420));
+            gsap.to(marqueeTrackRef.current, {
+              skewX: skew,
+              duration: 0.45,
+              ease: "power3.out",
+              overwrite: "auto",
+            });
+          }
         },
       });
 
-      // Chapter Wayfinding Observer
+      // 2. Chapter Wayfinding Observer
       CHAPTERS.forEach((chap) => {
         const el = document.getElementById(chap.id);
         if (!el) return;
@@ -1051,50 +1217,43 @@ export default function Home() {
         });
       });
 
-      // 3. ZERO-CONFLICT HAUTE-COUTURE HERO CHOREOGRAPHY
+      // 3. KINETIC HERO TYPOGRAPHY CHOREOGRAPHY
       gsap.fromTo(
         ".hero-enter-char",
-        { yPercent: 118, rotateZ: 3, opacity: 0 },
+        { yPercent: 122, rotateX: -52, opacity: 0 },
         {
           yPercent: 0,
-          rotateZ: 0,
+          rotateX: 0,
           opacity: 1,
-          duration: 1.15,
-          stagger: 0.034, // Fibonacci cadence
+          duration: 1.18,
+          stagger: 0.036,
           ease: "expo.out",
           delay: 0.12,
         }
       );
-
-      gsap.to(".hero-couture-arc", {
-        strokeDashoffset: 0,
-        duration: 1.5,
-        delay: 0.28,
-        ease: "power3.inOut",
-      });
 
       gsap.fromTo(
         ".hero-couture-rule",
         { scaleX: 0 },
         {
           scaleX: 1,
-          duration: 1.1,
-          stagger: 0.12,
-          delay: 0.35,
+          duration: 1.05,
+          stagger: 0.11,
+          delay: 0.34,
           ease: "expo.inOut",
         }
       );
 
       gsap.fromTo(
         ".hero-title-badge",
-        { scale: 0, rotate: -90, opacity: 0 },
-        { scale: 1, rotate: 0, opacity: 1, duration: 0.85, delay: 0.5, ease: "back.out(1.8)" }
+        { scale: 0, rotate: -60, opacity: 0 },
+        { scale: 1, rotate: 0, opacity: 1, duration: 0.85, delay: 0.52, ease: "back.out(1.7)" }
       );
 
       gsap.fromTo(
         [".hero-sub-reveal", ".hero-scroll-reveal", ".hero-top-bar"],
         { opacity: 0, y: 16 },
-        { opacity: 1, y: 0, duration: 0.9, delay: 0.48, stagger: 0.12, ease: "power3.out" }
+        { opacity: 1, y: 0, duration: 0.9, delay: 0.45, stagger: 0.1, ease: "power3.out" }
       );
 
       gsap.to(".hero-cue-orbit", {
@@ -1105,9 +1264,10 @@ export default function Home() {
         svgOrigin: "24 24",
       });
 
-      // Lookbook Gatefold Scroll-Out: "Saswat" glides left, "MOHANTY" parts right & down
+      // Editorial Gatefold Scroll-Out with Dynamic Kerning Expansion
       gsap.to(".hero-exit-first", {
-        xPercent: -26,
+        xPercent: -24,
+        letterSpacing: "0.08em",
         opacity: 0,
         filter: "blur(8px)",
         ease: "none",
@@ -1121,7 +1281,7 @@ export default function Home() {
 
       gsap.to(".hero-exit-last", {
         xPercent: 18,
-        yPercent: 20,
+        yPercent: 18,
         opacity: 0,
         filter: "blur(8px)",
         ease: "none",
@@ -1134,7 +1294,7 @@ export default function Home() {
       });
 
       gsap.to(".hero-exit-meta", {
-        y: 20,
+        y: 22,
         opacity: 0,
         ease: "none",
         scrollTrigger: {
@@ -1145,12 +1305,13 @@ export default function Home() {
         },
       });
 
-      // 4. Story Sections
+      // 4. Story Sections — 3D Perspective Masked Word Reveals + Ghost Numeral Parallax
       const sections = document.querySelectorAll(".story-section:not(#hero)");
       sections.forEach((section) => {
         const vessel = section.querySelector(".phi-vessel");
+        const ghostNum = section.querySelector(".ghost-numeral");
         const badges = section.querySelectorAll(".reveal-badge");
-        const headings = section.querySelectorAll(".reveal-heading");
+        const words = section.querySelectorAll(".kinetic-word");
         const texts = section.querySelectorAll(".reveal-text");
         const cards = section.querySelectorAll(".reveal-card");
         const drawPaths = section.querySelectorAll(".sec-draw-path");
@@ -1168,7 +1329,7 @@ export default function Home() {
         if (vessel) {
           secTl.fromTo(
             vessel,
-            { y: 42, opacity: 0, scale: 0.97 },
+            { y: 42, opacity: 0, scale: 0.975 },
             { y: 0, opacity: 1, scale: 1, duration: 1.05 },
             0
           );
@@ -1177,18 +1338,30 @@ export default function Home() {
           secTl.fromTo(
             rules,
             { scaleX: 0 },
-            { scaleX: 1, duration: 1.1, transformOrigin: "left center", ease: "expo.inOut" },
-            0.05
+            { scaleX: 1, duration: 1.05, transformOrigin: "left center", ease: "expo.inOut" },
+            0.06
           );
         }
         if (badges.length) {
           secTl.fromTo(badges, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.7 }, 0.08);
         }
-        if (headings.length) {
-          secTl.fromTo(headings, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.95 }, 0.14);
+        if (words.length) {
+          secTl.fromTo(
+            words,
+            { yPercent: 118, rotateX: -44, opacity: 0 },
+            {
+              yPercent: 0,
+              rotateX: 0,
+              opacity: 1,
+              duration: 0.95,
+              stagger: 0.042,
+              ease: "expo.out",
+            },
+            0.14
+          );
         }
         if (texts.length) {
-          secTl.fromTo(texts, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.85, stagger: 0.08 }, 0.22);
+          secTl.fromTo(texts, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.85, stagger: 0.08 }, 0.24);
         }
         if (drawPaths.length) {
           secTl.to(
@@ -1222,9 +1395,35 @@ export default function Home() {
             }
           );
         }
+
+        if (ghostNum) {
+          gsap.fromTo(
+            ghostNum,
+            { y: 55 },
+            {
+              y: -55,
+              ease: "none",
+              scrollTrigger: {
+                trigger: section,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: 1.1,
+              },
+            }
+          );
+        }
       });
 
-      // 5. Continuous Mathematical Diagram Loops
+      // 5. Continuous Showcase Typographic Ticker + Mathematical Diagram Loops
+      if (marqueeTrackRef.current) {
+        gsap.to(marqueeTrackRef.current, {
+          xPercent: -50,
+          duration: 28,
+          repeat: -1,
+          ease: "none",
+        });
+      }
+
       gsap.to(".vesica-crystal-spin", {
         rotation: 360,
         duration: 55,
@@ -1330,15 +1529,31 @@ export default function Home() {
   }, [pageSpirals.hud.length]);
 
   const cardSurface = isNight
-    ? "bg-slate-950/78 border-slate-800/85 shadow-[0_14px_48px_rgba(0,0,0,0.55)] text-white"
-    : "bg-white/78 border-neutral-200/75 shadow-[0_14px_48px_rgba(0,0,0,0.045)] text-neutral-900";
+    ? "bg-[#070c1b]/82 border-slate-800/90 shadow-[0_18px_56px_rgba(0,0,0,0.62)] text-white"
+    : "bg-[#fcfaf6]/84 border-neutral-900/12 shadow-[0_18px_56px_rgba(17,17,17,0.065)] text-neutral-900";
 
-  const accentText = isNight ? "text-indigo-400" : "text-[#a6864a]";
+  const accentText = isNight
+    ? "text-indigo-300"
+    : activeTheme === "sunset"
+      ? "text-[#9b3d0b]"
+      : "text-[#875311]";
+
+  const heroMetaInk = isNight
+    ? "text-slate-100"
+    : activeTheme === "sunset"
+      ? "text-[#1d0f08]"
+      : "text-[#0b0f19]";
+
+  const ghostStroke = isNight
+    ? "rgba(165, 180, 252, 0.09)"
+    : activeTheme === "sunset"
+      ? "rgba(155, 61, 11, 0.09)"
+      : "rgba(23, 23, 23, 0.075)";
 
   return (
     <div
       ref={mainRef}
-      className={`relative min-h-screen selection:bg-neutral-900 selection:text-white overflow-x-clip transition-colors duration-700 ${isNight ? "bg-[#060a17] text-white" : "bg-white text-neutral-900"
+      className={`${jakarta.className} relative min-h-screen selection:bg-neutral-900 selection:text-white overflow-x-clip transition-colors duration-700 ${isNight ? "bg-[#060a17] text-white" : "bg-white text-neutral-900"
         }`}
     >
       {/* Fullscreen Liquid Glass Icon Reveal Loader */}
@@ -1354,20 +1569,20 @@ export default function Home() {
         onModeChange={(newMode) => setTimeMode(newMode)}
       />
 
-      {/* Pure Typography Frameless Navigation Bar on Top */}
+      {/* Top-Center Celestial Half-Compass Navigation */}
       <FramelessNav activeTheme={activeTheme} />
 
       {/* High-End Architectural Grid Line Overlay */}
       <ArchitecturalGrid />
 
-      {/* Ambient Soundtrack Controller (The_Unfolding_Map.mp3) */}
+      {/* Ambient Soundtrack Controller */}
       <AmbientSound scrollProgress={scrollProgress} />
 
       {/* Top Hairline Golden-Ratio Scroll Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-[2px] z-50 pointer-events-none">
         <div
           ref={topHairlineRef}
-          className={`h-full w-full origin-left scale-x-0 will-change-transform ${isNight ? "bg-indigo-400" : "bg-[#a6864a]"
+          className={`h-full w-full origin-left scale-x-0 will-change-transform ${isNight ? "bg-indigo-400" : "bg-[#9b3d0b]"
             }`}
         />
       </div>
@@ -1375,11 +1590,11 @@ export default function Home() {
       {/* Subtle Viewport Golden-Section Axis Registration Ticks (38.2% & 61.8%) */}
       <div aria-hidden="true" className="fixed inset-0 pointer-events-none z-10 hidden xl:block">
         <div
-          className={`absolute top-0 bottom-0 left-[38.2%] w-px transition-colors duration-700 ${isNight ? "bg-white/[0.025]" : "bg-black/[0.025]"
+          className={`absolute top-0 bottom-0 left-[38.2%] w-px transition-colors duration-700 ${isNight ? "bg-white/[0.03]" : "bg-black/[0.03]"
             }`}
         />
         <div
-          className={`absolute top-0 bottom-0 left-[61.8%] w-px transition-colors duration-700 ${isNight ? "bg-white/[0.025]" : "bg-black/[0.025]"
+          className={`absolute top-0 bottom-0 left-[61.8%] w-px transition-colors duration-700 ${isNight ? "bg-white/[0.03]" : "bg-black/[0.03]"
             }`}
         />
       </div>
@@ -1389,7 +1604,7 @@ export default function Home() {
           ========================================================================= */}
       <aside
         aria-label="Section navigation"
-        className="hidden xl:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 flex-col items-end gap-3.5"
+        className={`${jetbrains.className} hidden xl:flex fixed right-6 top-1/2 -translate-y-1/2 z-40 flex-col items-end gap-3.5`}
       >
         <div className="flex flex-col items-end gap-1 mb-1 pointer-events-none select-none">
           <svg viewBox="0 0 56 56" fill="none" className="size-10 overflow-hidden">
@@ -1397,19 +1612,19 @@ export default function Home() {
               cx="28"
               cy="28"
               r="24"
-              stroke={isNight ? "rgba(165,180,252,0.18)" : "rgba(166,134,74,0.22)"}
+              stroke={isNight ? "rgba(165,180,252,0.22)" : "rgba(154,108,39,0.28)"}
               strokeWidth="0.8"
               strokeDasharray="2 4"
             />
             <path
               d={pageSpirals.hud.d}
-              stroke={isNight ? "rgba(165,180,252,0.18)" : "rgba(23,23,23,0.12)"}
+              stroke={isNight ? "rgba(165,180,252,0.18)" : "rgba(23,23,23,0.14)"}
               strokeWidth="1"
             />
             <path
               ref={hudSpiralPathRef}
               d={pageSpirals.hud.d}
-              stroke={isNight ? "#a5b4fc" : "#a6864a"}
+              stroke={isNight ? "#a5b4fc" : "#9a6c27"}
               strokeWidth="1.4"
               strokeDasharray={pageSpirals.hud.length}
               strokeDashoffset={pageSpirals.hud.length}
@@ -1417,8 +1632,7 @@ export default function Home() {
           </svg>
           <span
             ref={hudAngleRef}
-            className={`text-[9px] font-mono tracking-widest tabular-nums ${isNight ? "text-indigo-300/70" : "text-[#a6864a]"
-              }`}
+            className={`text-[9px] font-medium tracking-widest tabular-nums ${accentText}`}
           >
             0.00 rad
           </span>
@@ -1435,13 +1649,13 @@ export default function Home() {
               aria-label={`Scroll to ${chap.label}`}
             >
               <span
-                className={`text-[10px] font-mono uppercase tracking-[0.2em] transition-all duration-300 ${active
+                className={`text-[10px] uppercase tracking-[0.2em] transition-all duration-300 ${active
                     ? isNight
-                      ? "opacity-100 text-indigo-300 translate-x-0"
-                      : "opacity-100 text-neutral-900 translate-x-0"
+                      ? "opacity-100 text-indigo-200 font-semibold translate-x-0"
+                      : "opacity-100 text-neutral-950 font-semibold translate-x-0"
                     : isNight
-                      ? "opacity-0 group-hover:opacity-85 text-slate-400 translate-x-2 group-hover:translate-x-0"
-                      : "opacity-0 group-hover:opacity-85 text-neutral-500 translate-x-2 group-hover:translate-x-0"
+                      ? "opacity-0 group-hover:opacity-90 text-slate-300 translate-x-2 group-hover:translate-x-0"
+                      : "opacity-0 group-hover:opacity-90 text-neutral-700 translate-x-2 group-hover:translate-x-0"
                   }`}
               >
                 {chap.num} · {chap.label}
@@ -1449,11 +1663,11 @@ export default function Home() {
               <span
                 className={`block rounded-full transition-all duration-300 ${active
                     ? isNight
-                      ? "w-5 h-1.5 bg-indigo-400"
-                      : "w-5 h-1.5 bg-[#a6864a]"
+                      ? "w-5 h-1.5 bg-indigo-300 shadow-[0_0_8px_#a5b4fc]"
+                      : "w-5 h-1.5 bg-[#9b3d0b]"
                     : isNight
-                      ? "size-1.5 bg-slate-600 group-hover:bg-indigo-300"
-                      : "size-1.5 bg-neutral-400/50 group-hover:bg-neutral-900"
+                      ? "size-1.5 bg-slate-500 group-hover:bg-indigo-300"
+                      : "size-1.5 bg-neutral-600/55 group-hover:bg-neutral-950"
                   }`}
               />
             </button>
@@ -1462,8 +1676,7 @@ export default function Home() {
 
         <span
           ref={hudPctRef}
-          className={`mt-1 text-[10px] font-mono tracking-widest tabular-nums pointer-events-none ${isNight ? "text-slate-500" : "text-neutral-400"
-            }`}
+          className={`mt-1 text-[10px] font-medium tracking-widest tabular-nums pointer-events-none ${heroMetaInk}`}
         >
           00%
         </span>
@@ -1482,40 +1695,38 @@ export default function Home() {
       </div>
 
       {/* =========================================================================
-          SECTION 0: HERO (3D Model Unobstructed in Center, Couture Masthead)
+          SECTION 0: HERO (Unobstructed 3D ShipScene + Monumental Kinetic Masthead)
           ========================================================================= */}
       <section
         id="hero"
         className="story-section hero-section relative z-20 min-h-screen flex flex-col justify-between px-6 sm:px-12 lg:px-16 pt-24 pb-20"
       >
-        {/* Top Header Status Row */}
+        {/* Top Header Status Row (Crisp High-Contrast Telemetry) */}
         <div
-          className={`hero-top-bar w-full flex items-center justify-between text-xs font-mono uppercase tracking-[0.2em] transition-colors select-none ${isNight ? "text-slate-400" : "text-neutral-400"
-            }`}
+          className={`${jetbrains.className} hero-top-bar w-full flex items-center justify-between text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.22em] transition-colors select-none ${heroMetaInk}`}
         >
           <div className="hidden sm:flex items-center gap-3">
-            <span>Spatial Systems & Motion Direction</span>
-            <span className={`text-[10px] tracking-[0.25em] ${accentText}`}>Φ 1.618</span>
+            <ScrambleText text="SPATIAL SYSTEMS & MOTION" triggerOnMount delayMs={260} />
+            <span className={`text-[10px] font-semibold tracking-[0.25em] ${accentText}`}>Φ 1.618</span>
           </div>
-          <div className="text-[11px] font-mono tracking-widest text-right">
-            <span>STUDIO 2026 // NEW DELHI</span>
+          <div className="text-[10px] sm:text-[11px] tracking-[0.22em] text-right">
+            <ScrambleText text="STUDIO 2026 // NEW DELHI" triggerOnMount delayMs={380} />
           </div>
         </div>
 
         {/* Center Open Space for 3D ShipScene */}
         <div className="flex-1 flex items-center justify-center pointer-events-none" />
 
-        {/* Bottom Row: Haute-Couture Signature + Logarithmic Scroll Cue */}
+        {/* Bottom Row: Monumental Kinetic Masthead + Logarithmic Scroll Cue */}
         <div className="w-full flex flex-col md:flex-row md:items-end justify-between gap-8 z-30 pointer-events-none">
-          <CoutureHeroSignature isNight={isNight} />
+          <EditorialHeroMasthead activeTheme={activeTheme} isNight={isNight} />
 
           {/* BOTTOM RIGHT: GOLDEN SPIRAL SCROLL PENDULUM */}
           <div className="hero-exit-meta hero-scroll-reveal flex items-center md:flex-col md:items-end gap-3 pointer-events-none pb-2">
             <span
-              className={`text-xs font-mono tracking-widest uppercase ${isNight ? "text-slate-400" : "text-neutral-400"
-                }`}
+              className={`${jetbrains.className} text-[10px] sm:text-[11px] font-medium tracking-[0.26em] uppercase ${heroMetaInk}`}
             >
-              Scroll to explore
+              Scroll to descend
             </span>
             <div className="relative size-12 flex items-center justify-center">
               <svg viewBox="0 0 48 48" fill="none" className="size-12 overflow-hidden">
@@ -1524,18 +1735,18 @@ export default function Home() {
                     cx="24"
                     cy="24"
                     r="21"
-                    stroke={isNight ? "rgba(165,180,252,0.3)" : "rgba(166,134,74,0.35)"}
-                    strokeWidth="0.9"
+                    stroke={isNight ? "rgba(199,210,254,0.45)" : "rgba(155,61,11,0.48)"}
+                    strokeWidth="0.95"
                     strokeDasharray="3 5"
                   />
-                  <circle cx="24" cy="3" r="2.2" fill={isNight ? "#a5b4fc" : "#a6864a"} />
+                  <circle cx="24" cy="3" r="2.3" fill={isNight ? "#c7d2fe" : "#9b3d0b"} />
                 </g>
                 <path
                   d={pageSpirals.heroCue.d}
-                  stroke={isNight ? "rgba(255,255,255,0.7)" : "rgba(23,23,23,0.75)"}
-                  strokeWidth="1.15"
+                  stroke={isNight ? "rgba(255,255,255,0.85)" : "rgba(17,9,5,0.85)"}
+                  strokeWidth="1.2"
                 />
-                <circle cx="24" cy="24" r="2" fill={isNight ? "#a5b4fc" : "#171717"} />
+                <circle cx="24" cy="24" r="2.1" fill={isNight ? "#c7d2fe" : "#110905"} />
               </svg>
             </div>
           </div>
@@ -1543,64 +1754,79 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          SECTION 1: 01 MECHANICS (Left 38.2% Golden Anchor + Keplerian Chamber)
+          SECTION 1: 01 MECHANICS — MARGINALIA LEDGER EDITORIAL LAYOUT
           ========================================================================= */}
       <section
         id="mechanics"
         className="story-section relative z-20 min-h-screen flex items-center px-6 sm:px-12 lg:px-16 py-28"
       >
-        <div className="w-full max-w-7xl mx-auto flex items-center justify-start">
+        <div className="relative w-full max-w-7xl mx-auto flex items-center justify-start">
+          {/* Drifting Ghost Outlined Watermark Numeral */}
+          <span
+            aria-hidden="true"
+            style={{ WebkitTextStroke: `1px ${ghostStroke}`, color: "transparent" }}
+            className={`${bodoni.className} ghost-numeral pointer-events-none select-none hidden lg:block absolute -top-16 -left-6 text-[13rem] italic font-semibold leading-none z-0`}
+          >
+            01
+          </span>
+
           <div
             onMouseMove={(e) => handleCardMove(e, false)}
-            className={`phi-vessel group relative overflow-hidden w-full max-w-xl backdrop-blur-md p-8 sm:p-10 rounded-3xl border transition-colors duration-500 will-change-transform ${cardSurface}`}
+            className={`phi-vessel group relative z-10 overflow-hidden w-full max-w-2xl backdrop-blur-xl p-8 sm:p-11 rounded-3xl border transition-colors duration-500 will-change-transform ${cardSurface}`}
           >
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
               style={{
                 background: isNight
-                  ? "radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(129,140,248,0.12), transparent 65%)"
-                  : "radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(166,134,74,0.11), transparent 65%)",
+                  ? "radial-gradient(460px circle at var(--mx, 50%) var(--my, 50%), rgba(129,140,248,0.13), transparent 65%)"
+                  : "radial-gradient(460px circle at var(--mx, 50%) var(--my, 50%), rgba(155,61,11,0.1), transparent 65%)",
               }}
             />
 
             <div className="relative z-10">
-              <div className="reveal-badge flex items-center justify-between mb-4">
-                <span className={`text-xs font-mono uppercase tracking-[0.2em] ${accentText}`}>
-                  01 / Kinematics & Classical Form
+              <div className={`${jetbrains.className} reveal-badge flex items-center justify-between mb-5`}>
+                <span className={`text-[11px] font-medium uppercase tracking-[0.24em] ${accentText}`}>
+                  <ScrambleText text="01 / KINEMATICS & CLASSICAL FORM" />
                 </span>
-                <span className={`text-[10px] font-mono tracking-[0.22em] ${isNight ? "text-slate-500" : "text-neutral-400"}`}>
-                  1 : 1.618
+                <span className={`text-[10px] tracking-[0.24em] ${isNight ? "text-slate-400" : "text-neutral-500"}`}>
+                  RATIO 1 : 1.618
                 </span>
               </div>
 
               <OrbitalVectorsChamber isNight={isNight} />
 
-              <h2
-                className={`reveal-heading font-['Clash_Display',sans-serif] text-3xl sm:text-5xl lg:text-[3.25rem] font-semibold tracking-tight leading-[1.06] mb-5 ${isNight ? "text-white" : "text-neutral-900"
+              <KineticHeadline
+                className={`text-[2.1rem] sm:text-[3.1rem] lg:text-[3.55rem] leading-[1.03] mb-7 ${isNight ? "text-white" : "text-neutral-950"
                   }`}
-              >
-                Four Concentric Orbital Vectors
-              </h2>
+                accentClass={accentText}
+                segments={[
+                  { text: "Four Concentric", style: "sans" },
+                  { text: "Orbital Vectors", style: "accent" },
+                ]}
+              />
 
-              <p
-                className={`reveal-text text-sm sm:text-base font-light leading-relaxed mb-7 ${isNight ? "text-slate-300" : "text-neutral-600"
-                  }`}
-              >
-                Engineered to maintain absolute dimensional equilibrium. Blending classical sculptural heritage with real-time WebGL rendering, architectural topography rotates seamlessly in responsive 3D space.
-              </p>
+              <div className={`phi-rule h-px w-full mb-6 ${isNight ? "bg-slate-800" : "bg-neutral-900/12"}`} />
 
-              <div className={`phi-rule h-px w-full mb-5 ${isNight ? "bg-slate-800" : "bg-neutral-200/90"}`} />
+              {/* Swiss Marginalia Two-Column Text Layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-[0.38fr_1fr] gap-5 sm:gap-7 items-start">
+                <div className={`${jetbrains.className} reveal-card flex sm:flex-col gap-3 sm:gap-2 text-[10px] uppercase tracking-[0.2em]`}>
+                  <span className={accentText}>AXIS // KEPLER</span>
+                  <span className={isNight ? "text-slate-400" : "text-neutral-500"}>60 FPS · WEBGL</span>
+                  <span className={isNight ? "text-slate-400" : "text-neutral-500"}>Φ⁰ → Φ⁻³</span>
+                </div>
 
-              <div
-                className={`reveal-card text-xs font-mono uppercase tracking-wider flex flex-wrap items-center gap-3 ${isNight ? "text-slate-400" : "text-neutral-500"
-                  }`}
-              >
-                <span>Interactive Flight</span>
-                <span className={accentText}>•</span>
-                <span>Volumetric Depth</span>
-                <span className={accentText}>•</span>
-                <span>PBR Materials</span>
+                <p
+                  className={`reveal-text text-[14.5px] sm:text-[15.5px] font-normal leading-[1.78] ${isNight ? "text-slate-300" : "text-neutral-700"
+                    }`}
+                >
+                  <span
+                    className={`${bodoni.className} float-left mr-2.5 mt-0.5 text-[2.9rem] italic font-semibold leading-[0.8] ${accentText}`}
+                  >
+                    E
+                  </span>
+                  ngineered to maintain absolute dimensional equilibrium. Blending classical sculptural heritage with real-time WebGL rendering, architectural topography rotates seamlessly in responsive 3D space.
+                </p>
               </div>
             </div>
           </div>
@@ -1608,132 +1834,194 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          SECTION 2: 02 CONVERGENCE (Vesica Piscis √3:1 Optical Quartz Sanctuary)
+          SECTION 2: 02 CONVERGENCE — CENTERED MONUMENTAL BROADSHEET
           ========================================================================= */}
       <section
         id="convergence"
         className="story-section relative z-20 min-h-screen flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 py-28 text-center"
       >
-        <div
-          onMouseMove={(e) => handleCardMove(e, false)}
-          className={`phi-vessel group relative overflow-hidden max-w-4xl mx-auto flex flex-col items-center w-full backdrop-blur-md p-8 sm:p-12 rounded-3xl border transition-colors duration-500 will-change-transform ${cardSurface}`}
-        >
-          <div
+        <div className="relative max-w-4xl mx-auto w-full">
+          <span
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{
-              background: isNight
-                ? "radial-gradient(500px circle at var(--mx, 50%) var(--my, 50%), rgba(129,140,248,0.12), transparent 65%)"
-                : "radial-gradient(500px circle at var(--mx, 50%) var(--my, 50%), rgba(166,134,74,0.11), transparent 65%)",
-            }}
-          />
+            style={{ WebkitTextStroke: `1px ${ghostStroke}`, color: "transparent" }}
+            className={`${bodoni.className} ghost-numeral pointer-events-none select-none hidden lg:block absolute -top-20 left-1/2 -translate-x-1/2 text-[14rem] italic font-semibold leading-none z-0`}
+          >
+            02
+          </span>
 
-          <div className="relative z-10 w-full flex flex-col items-center">
-            <span className={`reveal-badge text-xs font-mono uppercase tracking-[0.22em] mb-3 block ${accentText}`}>
-              02 / Equilibrium & Heritage
-            </span>
-
-            <OpticalVesicaCrest isNight={isNight} />
-
-            <h2
-              className={`reveal-heading font-['Clash_Display',sans-serif] text-3xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.06] mb-6 ${isNight ? "text-white" : "text-neutral-900"
-                }`}
-            >
-              Optical Quartz Crystal Resonance
-            </h2>
-
-            <p
-              className={`reveal-text text-sm sm:text-base md:text-lg font-light leading-relaxed mb-8 max-w-2xl ${isNight ? "text-slate-300" : "text-neutral-600"
-                }`}
-            >
-              At the epicenter lies high-renaissance digital craftsmanship. High-precision sculptural topology merges with dynamic lighting and camera perspective controls.
-            </p>
-
-            <div className={`phi-rule h-px w-full max-w-2xl mb-6 ${isNight ? "bg-slate-800" : "bg-neutral-200/90"}`} />
-
-            <div
-              className={`reveal-card flex flex-wrap items-center justify-center gap-4 text-xs font-mono uppercase tracking-widest ${isNight ? "text-slate-400" : "text-neutral-500"
-                }`}
-            >
-              <span>High-Precision Photogrammetry</span>
-              <span className={accentText}>•</span>
-              <span>Sub-Surface Specular</span>
-              <span className={accentText}>•</span>
-              <span>Frictionless Orbit</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          SECTION 3: 03 ARCHITECTURE (Right 38.2% Golden Anchor + Fresnel Manifold)
-          ========================================================================= */}
-      <section
-        id="synthesis"
-        className="story-section relative z-20 min-h-screen flex items-center px-6 sm:px-12 lg:px-16 py-28"
-      >
-        <div className="w-full max-w-7xl mx-auto flex items-center justify-end">
           <div
             onMouseMove={(e) => handleCardMove(e, false)}
-            className={`phi-vessel group relative overflow-hidden w-full max-w-xl backdrop-blur-md p-8 sm:p-10 rounded-3xl border transition-colors duration-500 will-change-transform ${cardSurface}`}
+            className={`phi-vessel group relative z-10 overflow-hidden flex flex-col items-center w-full backdrop-blur-xl p-8 sm:p-12 lg:p-14 rounded-3xl border transition-colors duration-500 will-change-transform ${cardSurface}`}
           >
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
               style={{
                 background: isNight
-                  ? "radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(129,140,248,0.12), transparent 65%)"
-                  : "radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(166,134,74,0.11), transparent 65%)",
+                  ? "radial-gradient(520px circle at var(--mx, 50%) var(--my, 50%), rgba(129,140,248,0.13), transparent 65%)"
+                  : "radial-gradient(520px circle at var(--mx, 50%) var(--my, 50%), rgba(155,61,11,0.1), transparent 65%)",
+              }}
+            />
+
+            <div className="relative z-10 w-full flex flex-col items-center">
+              <div className={`${jetbrains.className} reveal-badge flex items-center gap-3 mb-4`}>
+                <span className={`h-px w-8 ${isNight ? "bg-indigo-400/50" : "bg-[#9b3d0b]/50"}`} />
+                <span className={`text-[11px] font-medium uppercase tracking-[0.26em] ${accentText}`}>
+                  <ScrambleText text="02 / EQUILIBRIUM & HERITAGE" />
+                </span>
+                <span className={`h-px w-8 ${isNight ? "bg-indigo-400/50" : "bg-[#9b3d0b]/50"}`} />
+              </div>
+
+              <OpticalVesicaCrest isNight={isNight} />
+
+              <KineticHeadline
+                className={`text-[2.25rem] sm:text-[3.6rem] lg:text-[4.35rem] leading-[1.02] mb-6 ${isNight ? "text-white" : "text-neutral-950"
+                  }`}
+                accentClass={accentText}
+                segments={[
+                  { text: "Optical", style: "serif" },
+                  { text: "Quartz Crystal", style: "sans" },
+                  { text: "Resonance", style: "accent" },
+                ]}
+              />
+
+              {/* Editorial Pull-Quote Statement */}
+              <p
+                className={`${bodoni.className} reveal-text text-xl sm:text-2xl italic font-normal leading-relaxed mb-3 max-w-2xl ${isNight ? "text-indigo-100/95" : "text-neutral-900"
+                  }`}
+              >
+                “At the epicenter lies high-renaissance digital craftsmanship.”
+              </p>
+
+              <p
+                className={`reveal-text text-sm sm:text-[15.5px] font-normal leading-[1.8] mb-9 max-w-xl ${isNight ? "text-slate-300" : "text-neutral-600"
+                  }`}
+              >
+                High-precision sculptural topology merges with dynamic atmospheric lighting and calibrated camera perspective controls.
+              </p>
+
+              {/* Symmetrical 3-Column Spec Bar */}
+              <div
+                className={`w-full grid grid-cols-1 sm:grid-cols-3 border-t pt-6 gap-4 sm:gap-0 sm:divide-x ${isNight
+                    ? "border-slate-800 divide-slate-800"
+                    : "border-neutral-900/12 divide-neutral-900/12"
+                  }`}
+              >
+                {[
+                  { n: "I", title: "Photogrammetry", sub: "Sub-millimeter Mesh" },
+                  { n: "II", title: "Sub-Surface", sub: "Specular Dispersion" },
+                  { n: "III", title: "Frictionless", sub: "Damped Orbit Physics" },
+                ].map((spec) => (
+                  <div key={spec.n} className="reveal-card px-4 flex flex-col items-center">
+                    <span className={`${bodoni.className} italic text-lg leading-none mb-1 ${accentText}`}>
+                      {spec.n}
+                    </span>
+                    <span className="font-['Clash_Display',sans-serif] text-sm font-medium tracking-wide">
+                      {spec.title}
+                    </span>
+                    <span
+                      className={`${jetbrains.className} mt-1 text-[9px] uppercase tracking-[0.2em] ${isNight ? "text-slate-400" : "text-neutral-500"
+                        }`}
+                    >
+                      {spec.sub}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 3: 03 ARCHITECTURE — INDEX-NUMBERED TECHNICAL MONOGRAPH
+          ========================================================================= */}
+      <section
+        id="synthesis"
+        className="story-section relative z-20 min-h-screen flex items-center px-6 sm:px-12 lg:px-16 py-28"
+      >
+        <div className="relative w-full max-w-7xl mx-auto flex items-center justify-end">
+          <span
+            aria-hidden="true"
+            style={{ WebkitTextStroke: `1px ${ghostStroke}`, color: "transparent" }}
+            className={`${bodoni.className} ghost-numeral pointer-events-none select-none hidden lg:block absolute -top-16 -right-4 text-[13rem] italic font-semibold leading-none z-0`}
+          >
+            03
+          </span>
+
+          <div
+            onMouseMove={(e) => handleCardMove(e, false)}
+            className={`phi-vessel group relative z-10 overflow-hidden w-full max-w-2xl backdrop-blur-xl p-8 sm:p-11 rounded-3xl border transition-colors duration-500 will-change-transform ${cardSurface}`}
+          >
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              style={{
+                background: isNight
+                  ? "radial-gradient(460px circle at var(--mx, 50%) var(--my, 50%), rgba(129,140,248,0.13), transparent 65%)"
+                  : "radial-gradient(460px circle at var(--mx, 50%) var(--my, 50%), rgba(155,61,11,0.1), transparent 65%)",
               }}
             />
 
             <div className="relative z-10">
-              <div className="reveal-badge flex items-center justify-between mb-4">
-                <span className={`text-xs font-mono uppercase tracking-[0.2em] ${accentText}`}>
-                  03 / Shaders & Materials
+              <div className={`${jetbrains.className} reveal-badge flex items-center justify-between mb-5`}>
+                <span className={`text-[11px] font-medium uppercase tracking-[0.24em] ${accentText}`}>
+                  <ScrambleText text="03 / SHADERS & MATERIALS" />
                 </span>
-                <span className={`text-[10px] font-mono tracking-[0.22em] ${isNight ? "text-slate-500" : "text-neutral-400"}`}>
+                <span className={`text-[10px] tracking-[0.24em] ${isNight ? "text-slate-400" : "text-neutral-500"}`}>
                   Φ⁻¹ · FRESNEL
                 </span>
               </div>
 
               <FresnelShaderChamber isNight={isNight} />
 
-              <h2
-                className={`reveal-heading font-['Clash_Display',sans-serif] text-3xl sm:text-5xl lg:text-[3.25rem] font-semibold tracking-tight leading-[1.06] mb-5 ${isNight ? "text-white" : "text-neutral-900"
+              <KineticHeadline
+                className={`text-[2.1rem] sm:text-[3.1rem] lg:text-[3.55rem] leading-[1.03] mb-5 ${isNight ? "text-white" : "text-neutral-950"
                   }`}
-              >
-                Physically-Based Interactive Shaders
-              </h2>
+                accentClass={accentText}
+                segments={[
+                  { text: "Physically-Based", style: "sans" },
+                  { text: "Interactive Shaders", style: "accent" },
+                ]}
+              />
 
               <p
-                className={`reveal-text text-sm sm:text-base font-light leading-relaxed mb-7 ${isNight ? "text-slate-300" : "text-neutral-600"
+                className={`reveal-text text-[14.5px] sm:text-[15.5px] font-normal leading-[1.78] mb-7 ${isNight ? "text-slate-300" : "text-neutral-700"
                   }`}
               >
-                Merging volumetric brushstroke geometry with modern real-time lighting. Every rim highlight, woven cloud texture, and atmospheric depth computes dynamically against lighting environments.
+                Merging volumetric brushstroke geometry with modern real-time lighting. Every rim highlight, woven cloud texture, and atmospheric depth computes dynamically against shifting lighting environments.
               </p>
 
-              <div className={`phi-rule h-px w-full mb-5 ${isNight ? "bg-slate-800" : "bg-neutral-200/90"}`} />
-
-              <ul
-                className={`space-y-3 font-mono text-xs ${isNight ? "text-slate-300" : "text-neutral-600"
-                  }`}
-              >
-                <li className="reveal-card flex items-center gap-3">
-                  <span className={`text-[10px] ${accentText}`}>01</span>
-                  <span className={`h-px w-3 ${isNight ? "bg-slate-700" : "bg-neutral-300"}`} />
-                  <span>3D Volumetric Cloud Depth Reconstruction</span>
-                </li>
-                <li className="reveal-card flex items-center gap-3">
-                  <span className={`text-[10px] ${accentText}`}>02</span>
-                  <span className={`h-px w-3 ${isNight ? "bg-slate-700" : "bg-neutral-300"}`} />
-                  <span>Real-Time PBR Material Pipeline with ACES Tone Mapping</span>
-                </li>
-                <li className="reveal-card flex items-center gap-3">
-                  <span className={`text-[10px] ${accentText}`}>03</span>
-                  <span className={`h-px w-3 ${isNight ? "bg-slate-700" : "bg-neutral-300"}`} />
-                  <span>Responsive Coordinate Mapping Across Desktop & Mobile Viewports</span>
-                </li>
+              {/* Interactive Hover-Sweep Technical Spec Rows */}
+              <ul className={`divide-y border-t ${isNight ? "divide-slate-800 border-slate-800" : "divide-neutral-900/10 border-neutral-900/12"}`}>
+                {[
+                  { num: "01", tag: "VOLUMETRIC", label: "3D Volumetric Cloud Depth Reconstruction" },
+                  { num: "02", tag: "ACES · PBR", label: "Real-Time Material Pipeline & Tone Mapping" },
+                  { num: "03", tag: "ADAPTIVE", label: "Responsive Coordinate Mapping Across Viewports" },
+                ].map((row) => (
+                  <li
+                    key={row.num}
+                    className={`reveal-card group/row relative flex items-center justify-between gap-4 py-3.5 px-2 -mx-2 rounded-lg transition-colors duration-300 ${isNight ? "hover:bg-indigo-400/10" : "hover:bg-[#9b3d0b]/[0.06]"
+                      }`}
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <span className={`${bodoni.className} italic text-base font-semibold shrink-0 ${accentText}`}>
+                        {row.num}
+                      </span>
+                      <span
+                        className={`text-[13px] sm:text-sm font-medium truncate transition-transform duration-300 group-hover/row:translate-x-1 ${isNight ? "text-slate-200" : "text-neutral-800"
+                          }`}
+                      >
+                        {row.label}
+                      </span>
+                    </div>
+                    <span
+                      className={`${jetbrains.className} hidden sm:inline text-[9px] tracking-[0.2em] uppercase shrink-0 opacity-65 group-hover/row:opacity-100 ${accentText}`}
+                    >
+                      {row.tag}
+                    </span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -1741,30 +2029,74 @@ export default function Home() {
       </section>
 
       {/* =========================================================================
-          SECTION 4: 04 SHOWCASE GATEWAY — TRUE GOLDEN RATIO SPIRAL MOSAIC
+          SECTION 4: 04 SHOWCASE GATEWAY — KINETIC TICKER + GOLDEN SPIRAL MOSAIC
           ========================================================================= */}
       <section
         id="showcase"
         className="story-section relative z-20 min-h-screen flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 py-32 text-center"
       >
         <div className="max-w-5xl mx-auto flex flex-col items-center w-full">
-          <span className={`reveal-badge text-xs font-mono uppercase tracking-[0.22em] mb-4 block ${accentText}`}>
-            04 / Selected Works
-          </span>
+          <div className={`${jetbrains.className} reveal-badge flex items-center gap-3 mb-4`}>
+            <span className={`h-px w-8 ${isNight ? "bg-indigo-400/50" : "bg-[#9b3d0b]/50"}`} />
+            <span className={`text-[11px] font-medium uppercase tracking-[0.26em] ${accentText}`}>
+              <ScrambleText text="04 / SELECTED ARCHIVE" />
+            </span>
+            <span className={`h-px w-8 ${isNight ? "bg-indigo-400/50" : "bg-[#9b3d0b]/50"}`} />
+          </div>
 
-          <h2
-            className={`reveal-heading font-['Clash_Display',sans-serif] text-4xl sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-tight mb-6 ${isNight ? "text-white" : "text-neutral-900"
+          <KineticHeadline
+            className={`text-[2.5rem] sm:text-[4.2rem] lg:text-[5.1rem] leading-[1.01] mb-6 ${isNight ? "text-white" : "text-neutral-950"
               }`}
-          >
-            Explorations in Physical & Digital Form
-          </h2>
+            accentClass={accentText}
+            segments={[
+              { text: "Explorations in", style: "sans" },
+              { text: "Physical & Digital", style: "accent" },
+              { text: "Form", style: "serif" },
+            ]}
+          />
 
           <p
-            className={`reveal-text text-sm sm:text-base md:text-lg font-light leading-relaxed mb-12 max-w-2xl ${isNight ? "text-slate-300" : "text-neutral-600"
+            className={`reveal-text text-sm sm:text-base md:text-[17px] font-normal leading-[1.75] mb-9 max-w-2xl ${isNight ? "text-slate-300" : "text-neutral-600"
               }`}
           >
-            A portfolio of spatial computing interfaces, brand identities, and generative WebGL installations engineered for visionary brands.
+            A curated monograph of spatial computing interfaces, typographic systems, and generative WebGL installations engineered for visionary studios.
           </p>
+
+          {/* Scroll-Velocity-Skewed Architectural Typographic Ribbon */}
+          <div
+            aria-hidden="true"
+            className={`w-full max-w-4xl overflow-hidden border-y py-2.5 mb-10 ${isNight
+                ? "border-slate-800/90 text-slate-300/80"
+                : "border-neutral-900/12 text-neutral-700/85"
+              }`}
+            style={{
+              maskImage: "linear-gradient(90deg, transparent 0%, black 12%, black 88%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(90deg, transparent 0%, black 12%, black 88%, transparent 100%)",
+            }}
+          >
+            <div ref={marqueeTrackRef} className="flex w-max items-center gap-8 whitespace-nowrap will-change-transform">
+              {[0, 1].map((dup) => (
+                <div key={dup} className="flex items-center gap-8">
+                  <span className={`${jetbrains.className} text-[10px] uppercase tracking-[0.28em]`}>
+                    GOLDEN RATIO 1.618
+                  </span>
+                  <span className={accentText}>✦</span>
+                  <span className={`${bodoni.className} italic text-base`}>Spatial Computing</span>
+                  <span className={accentText}>✦</span>
+                  <span className={`${jetbrains.className} text-[10px] uppercase tracking-[0.28em]`}>
+                    REAL-TIME SHADERS
+                  </span>
+                  <span className={accentText}>✦</span>
+                  <span className={`${bodoni.className} italic text-base`}>Editorial Motion</span>
+                  <span className={accentText}>✦</span>
+                  <span className={`${jetbrains.className} text-[10px] uppercase tracking-[0.28em]`}>
+                    08 SELECTED WORKS
+                  </span>
+                  <span className={accentText}>✦</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div id="showcase-mosaic" className="relative w-full max-w-4xl mb-12">
             <svg
@@ -1776,7 +2108,7 @@ export default function Home() {
             >
               <path
                 d={pageSpirals.mosaicSpiralD}
-                stroke={isNight ? "rgba(165,180,252,0.42)" : "rgba(166,134,74,0.45)"}
+                stroke={isNight ? "rgba(165,180,252,0.42)" : "rgba(155,61,11,0.42)"}
                 strokeWidth="1.4"
                 strokeDasharray={pageSpirals.mosaicSpiralLen}
                 strokeDashoffset={pageSpirals.mosaicSpiralLen}
@@ -1790,15 +2122,20 @@ export default function Home() {
               <Link
                 href="/projects"
                 onMouseMove={(e) => handleCardMove(e, true)}
-                onMouseEnter={() => setVellinHovered(true)}
+                onMouseEnter={() => {
+                  setVellinHovered(true);
+                  try {
+                    cozyAudio.playHover?.(0);
+                  } catch { }
+                }}
                 onMouseLeave={(e) => {
                   setVellinHovered(false);
                   handleCardLeave(e, true);
                 }}
                 style={{ transformStyle: "preserve-3d" }}
-                className={`reveal-card group relative overflow-hidden p-7 sm:p-8 rounded-3xl text-left flex flex-col justify-between no-underline border backdrop-blur-md transition-colors duration-500 will-change-transform ${isNight
-                    ? "bg-slate-900/85 border-slate-800 text-white hover:border-indigo-400/60 shadow-xl"
-                    : "bg-white/85 border-neutral-200/90 text-neutral-900 hover:border-[#a6864a]/60 shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
+                className={`reveal-card group relative overflow-hidden p-7 sm:p-8 rounded-3xl text-left flex flex-col justify-between no-underline border backdrop-blur-xl transition-colors duration-500 will-change-transform ${isNight
+                    ? "bg-slate-900/86 border-slate-800 text-white hover:border-indigo-400/60 shadow-xl"
+                    : "bg-[#fcfaf6]/90 border-neutral-900/12 text-neutral-950 hover:border-[#9b3d0b]/60 shadow-[0_10px_34px_rgba(0,0,0,0.05)]"
                   }`}
               >
                 <div
@@ -1807,15 +2144,15 @@ export default function Home() {
                   style={{
                     background: isNight
                       ? "radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(129,140,248,0.14), transparent 65%)"
-                      : "radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(166,134,74,0.12), transparent 65%)",
+                      : "radial-gradient(400px circle at var(--mx, 50%) var(--my, 50%), rgba(155,61,11,0.11), transparent 65%)",
                   }}
                 />
 
-                <div className="relative z-10 flex items-center justify-between">
-                  <span className={`text-[10px] font-mono uppercase tracking-[0.22em] ${accentText}`}>
+                <div className={`${jetbrains.className} relative z-10 flex items-center justify-between`}>
+                  <span className={`text-[10px] uppercase tracking-[0.22em] ${accentText}`}>
                     01 / SPATIAL INTERFACE
                   </span>
-                  <span className={`text-[10px] font-mono ${isNight ? "text-slate-500" : "text-neutral-400"}`}>
+                  <span className={`text-[10px] ${isNight ? "text-slate-400" : "text-neutral-500"}`}>
                     Φ² · 61.8%
                   </span>
                 </div>
@@ -1824,10 +2161,13 @@ export default function Home() {
                   <GoldenPolyhedronMiniCanvas isNight={isNight} hovered={vellinHovered} />
                 </div>
 
-                <div className="relative z-10 flex items-end justify-between pt-4 border-t border-current/10">
+                <div className="relative z-10 flex items-end justify-between pt-4 border-t border-current/12">
                   <div>
-                    <span className="font-['Clash_Display',sans-serif] text-2xl sm:text-3xl font-semibold block tracking-tight">
-                      Vellin Studio
+                    <span className="font-['Clash_Display',sans-serif] text-2xl sm:text-3xl font-semibold tracking-tight">
+                      Vellin{" "}
+                      <span className={`${bodoni.className} italic font-medium ${accentText}`}>
+                        Studio
+                      </span>
                     </span>
                   </div>
                   <span
@@ -1845,18 +2185,23 @@ export default function Home() {
                 <Link
                   href="/projects"
                   onMouseMove={(e) => handleCardMove(e, true)}
+                  onMouseEnter={() => {
+                    try {
+                      cozyAudio.playHover?.(1);
+                    } catch { }
+                  }}
                   onMouseLeave={(e) => handleCardLeave(e, true)}
                   style={{ transformStyle: "preserve-3d" }}
-                  className={`reveal-card group relative overflow-hidden p-6 rounded-3xl text-left flex flex-col justify-between no-underline border backdrop-blur-md transition-colors duration-500 will-change-transform ${isNight
-                      ? "bg-slate-900/85 border-slate-800 text-white hover:border-indigo-400/60 shadow-xl"
-                      : "bg-white/85 border-neutral-200/90 text-neutral-900 hover:border-[#a6864a]/60 shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
+                  className={`reveal-card group relative overflow-hidden p-6 rounded-3xl text-left flex flex-col justify-between no-underline border backdrop-blur-xl transition-colors duration-500 will-change-transform ${isNight
+                      ? "bg-slate-900/86 border-slate-800 text-white hover:border-indigo-400/60 shadow-xl"
+                      : "bg-[#fcfaf6]/90 border-neutral-900/12 text-neutral-950 hover:border-[#9b3d0b]/60 shadow-[0_10px_34px_rgba(0,0,0,0.05)]"
                     }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-mono uppercase tracking-[0.2em] ${accentText}`}>
+                  <div className={`${jetbrains.className} flex items-center justify-between`}>
+                    <span className={`text-[10px] uppercase tracking-[0.2em] ${accentText}`}>
                       02 / SOUND ARCHITECTURE
                     </span>
-                    <span className={`text-[10px] font-mono ${isNight ? "text-slate-500" : "text-neutral-400"}`}>
+                    <span className={`text-[10px] ${isNight ? "text-slate-400" : "text-neutral-500"}`}>
                       3 : 5
                     </span>
                   </div>
@@ -1865,11 +2210,16 @@ export default function Home() {
                     <ShowcaseMicroDiagram type="aura" isNight={isNight} />
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-current/10">
-                    <span className="font-['Clash_Display',sans-serif] text-xl font-semibold block">
-                      Aura Spatial
+                  <div className="flex items-center justify-between pt-3 border-t border-current/12">
+                    <span className="font-['Clash_Display',sans-serif] text-xl font-semibold">
+                      Aura{" "}
+                      <span className={`${bodoni.className} italic font-medium ${accentText}`}>
+                        Spatial
+                      </span>
                     </span>
-                    <span className="text-xs font-mono opacity-60 group-hover:opacity-100 transition-opacity">↗</span>
+                    <span className={`${jetbrains.className} text-xs opacity-65 group-hover:opacity-100 transition-opacity`}>
+                      ↗
+                    </span>
                   </div>
                 </Link>
 
@@ -1877,20 +2227,28 @@ export default function Home() {
                 <Link
                   href="/projects"
                   onMouseMove={(e) => handleCardMove(e, true)}
+                  onMouseEnter={() => {
+                    try {
+                      cozyAudio.playHover?.(2);
+                    } catch { }
+                  }}
                   onMouseLeave={(e) => handleCardLeave(e, true)}
                   style={{ transformStyle: "preserve-3d" }}
-                  className={`reveal-card group relative overflow-hidden p-6 rounded-3xl text-left flex flex-col justify-between no-underline border backdrop-blur-md transition-colors duration-500 will-change-transform ${isNight
-                      ? "bg-slate-900/85 border-slate-800 text-white hover:border-indigo-400/60 shadow-xl"
-                      : "bg-white/85 border-neutral-200/90 text-neutral-900 hover:border-[#a6864a]/60 shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
+                  className={`reveal-card group relative overflow-hidden p-6 rounded-3xl text-left flex flex-col justify-between no-underline border backdrop-blur-xl transition-colors duration-500 will-change-transform ${isNight
+                      ? "bg-slate-900/86 border-slate-800 text-white hover:border-indigo-400/60 shadow-xl"
+                      : "bg-[#fcfaf6]/90 border-neutral-900/12 text-neutral-950 hover:border-[#9b3d0b]/60 shadow-[0_10px_34px_rgba(0,0,0,0.05)]"
                     }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <span className={`text-[10px] font-mono uppercase tracking-[0.2em] block mb-1 ${accentText}`}>
+                      <span className={`${jetbrains.className} text-[10px] uppercase tracking-[0.2em] block mb-1 ${accentText}`}>
                         03 / GENERATIVE SYSTEM
                       </span>
                       <span className="font-['Clash_Display',sans-serif] text-xl font-semibold block">
-                        Kroma System
+                        Kroma{" "}
+                        <span className={`${bodoni.className} italic font-medium ${accentText}`}>
+                          System
+                        </span>
                       </span>
                     </div>
                     <div className="w-24 h-16 shrink-0 overflow-hidden">
@@ -1907,12 +2265,14 @@ export default function Home() {
             <div ref={magneticCtaRef} className="inline-block will-change-transform">
               <Link
                 href="/projects"
-                className={`group inline-flex items-center gap-3 px-8 py-4 rounded-full text-sm font-semibold tracking-wide no-underline transition-all shadow-[0_6px_24px_rgba(0,0,0,0.12)] active:scale-95 ${isNight
-                    ? "bg-white text-neutral-950 hover:bg-slate-100"
-                    : "bg-neutral-900 text-white hover:bg-black"
+                onClick={() => cozyAudio.playSnap?.(1, 1)}
+                className={`group inline-flex items-center gap-3 px-8 py-4 rounded-full text-sm font-semibold tracking-wide no-underline transition-all shadow-[0_8px_28px_rgba(0,0,0,0.14)] active:scale-95 ${isNight
+                    ? "bg-white text-neutral-950 hover:bg-indigo-50"
+                    : "bg-neutral-950 text-[#fcfaf6] hover:bg-black"
                   }`}
               >
-                <span>Explore Selected Projects (08)</span>
+                <span>Explore Selected Works</span>
+                <span className={`${jetbrains.className} text-[11px] opacity-65`}>(08)</span>
                 <span className="relative flex size-4 items-center justify-center overflow-hidden">
                   <svg
                     width="16"
@@ -1942,21 +2302,23 @@ export default function Home() {
               </Link>
             </div>
 
-            <a
-              href="mailto:saswat@example.com"
-              className={`inline-flex items-center gap-2 px-6 py-4 rounded-full text-sm font-medium transition-colors shadow-sm no-underline ${isNight
-                  ? "bg-slate-900/90 text-white border border-slate-700 hover:border-indigo-400"
-                  : "bg-white/90 text-neutral-900 border border-neutral-200 hover:border-neutral-900"
+            <Link
+              href="/contact"
+              className={`inline-flex items-center gap-2.5 px-7 py-4 rounded-full text-sm font-medium transition-colors shadow-sm no-underline backdrop-blur-md ${isNight
+                  ? "bg-slate-900/90 text-white border border-slate-700 hover:border-indigo-300"
+                  : "bg-[#fcfaf6]/92 text-neutral-950 border border-neutral-900/20 hover:border-neutral-950"
                 }`}
+              onClick={() => cozyAudio.playSnap?.(3, 1)}
             >
               <span>Initiate Collaboration</span>
-            </a>
+              <span className={accentText}>↗</span>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-          SECTION 5: 05 ENGINEERING SKYLINE
+          SECTION 5: 05 ENGINEERING SKYLINE & EDITORIAL COLOPHON
           ========================================================================= */}
       <section
         id="skyline"
@@ -1964,22 +2326,25 @@ export default function Home() {
       >
         <div className="max-w-5xl mx-auto w-full">
           <div
-            className={`phi-vessel mb-6 text-left flex flex-col sm:flex-row sm:items-end justify-between gap-4 backdrop-blur-md p-6 sm:p-8 rounded-3xl border transition-colors duration-500 ${cardSurface}`}
+            className={`phi-vessel mb-6 text-left flex flex-col sm:flex-row sm:items-end justify-between gap-5 backdrop-blur-xl p-6 sm:p-9 rounded-3xl border transition-colors duration-500 ${cardSurface}`}
           >
             <div>
-              <span className={`reveal-badge text-xs font-mono uppercase tracking-[0.2em] mb-2 block ${accentText}`}>
-                05 / Activity
+              <span className={`${jetbrains.className} reveal-badge text-[11px] font-medium uppercase tracking-[0.24em] mb-2.5 block ${accentText}`}>
+                <ScrambleText text="05 / ENGINEERING CADENCE" />
               </span>
 
-              <h2
-                className={`reveal-heading font-['Clash_Display',sans-serif] text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight leading-tight mb-2 ${isNight ? "text-white" : "text-neutral-900"
+              <KineticHeadline
+                className={`text-[1.9rem] sm:text-[2.6rem] lg:text-[3rem] leading-[1.05] mb-3 ${isNight ? "text-white" : "text-neutral-950"
                   }`}
-              >
-                Engineering & Kinetic Cadence
-              </h2>
+                accentClass={accentText}
+                segments={[
+                  { text: "Engineering &", style: "sans" },
+                  { text: "Kinetic Cadence", style: "accent" },
+                ]}
+              />
 
               <p
-                className={`reveal-text text-xs sm:text-sm font-light max-w-xl leading-relaxed ${isNight ? "text-slate-300" : "text-neutral-500"
+                className={`reveal-text text-xs sm:text-sm font-normal max-w-xl leading-[1.75] ${isNight ? "text-slate-300" : "text-neutral-600"
                   }`}
               >
                 Live GitHub commit continuum for{" "}
@@ -1987,7 +2352,7 @@ export default function Home() {
                   href="https://github.com/SazWhatician"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`font-medium underline underline-offset-4 ${isNight ? "text-indigo-300 hover:text-white" : "text-neutral-900 hover:text-black"
+                  className={`${jetbrains.className} font-medium underline underline-offset-4 ${isNight ? "text-indigo-200 hover:text-white" : "text-neutral-950 hover:text-[#9b3d0b]"
                     }`}
                 >
                   @SazWhatician
@@ -2000,9 +2365,9 @@ export default function Home() {
               href="https://github.com/SazWhatician"
               target="_blank"
               rel="noopener noreferrer"
-              className={`reveal-card inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-mono transition-all self-start sm:self-auto shadow-sm no-underline ${isNight
-                  ? "border border-slate-700 text-slate-200 hover:text-white hover:border-indigo-400 bg-slate-900/80"
-                  : "border border-neutral-200 text-neutral-700 hover:text-neutral-900 hover:border-neutral-400 bg-neutral-50/80"
+              className={`${jetbrains.className} reveal-card inline-flex items-center gap-2.5 px-4 py-2 rounded-full text-[11px] transition-all self-start sm:self-auto shadow-sm no-underline ${isNight
+                  ? "border border-slate-700 text-slate-100 hover:text-white hover:border-indigo-300 bg-slate-900/85"
+                  : "border border-neutral-900/20 text-neutral-900 hover:border-neutral-950 bg-white/85"
                 }`}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -2025,15 +2390,24 @@ export default function Home() {
             />
           </div>
 
-          <div className="mt-12">
-            <div className={`phi-rule h-px w-full mb-6 ${isNight ? "bg-slate-800" : "bg-neutral-200/80"}`} />
-            <div
-              className={`flex flex-col sm:flex-row items-center justify-between text-xs font-mono gap-4 ${isNight ? "text-slate-400" : "text-neutral-400"
-                }`}
-            >
-              <div>© 2026 SASWAT MOHANTY. ALL RIGHTS RESERVED.</div>
-              <div className="flex items-center gap-6">
-                <span className={accentText}>Φ 1.61803</span>
+          {/* Editorial Monograph Colophon Footer */}
+          <div className="mt-14">
+            <div className={`phi-rule h-px w-full mb-7 ${isNight ? "bg-slate-800" : "bg-neutral-900/15"}`} />
+            <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
+              <div>
+                <span className={`font-['Clash_Display',sans-serif] text-xl sm:text-2xl font-semibold tracking-tight ${heroMetaInk}`}>
+                  SASWAT{" "}
+                  <span className={`${bodoni.className} italic font-medium ${accentText}`}>
+                    Mohanty
+                  </span>
+                </span>
+                <span className={`${jetbrains.className} block mt-1.5 text-[10px] tracking-[0.24em] uppercase ${heroMetaInk}`}>
+                  © 2026 ALL RIGHTS RESERVED · EDITION XXVI
+                </span>
+              </div>
+
+              <div className={`${jetbrains.className} flex flex-wrap items-center gap-x-6 gap-y-2 text-[10px] uppercase tracking-[0.22em] ${heroMetaInk}`}>
+                <span className={`font-semibold ${accentText}`}>Φ 1.61803</span>
                 <span>SPATIAL COMPUTING & INTERFACE DESIGN</span>
                 <span>NEW DELHI, INDIA</span>
               </div>
