@@ -28,6 +28,10 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Runtime inbox data / contact submissions
+data/inbox.json
+data/inbox*.json
+
 # Vercel
 .vercel
 
