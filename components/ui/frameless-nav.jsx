@@ -78,7 +78,7 @@ const ROUTES = [
     label: "CONTACT",
     editorial: "Initiate",
     subtitle: "Cadence · Direct Signal",
-    href: "mailto:saswat@example.com",
+    href: "/contact",
     harmonic: "Φ⁻³",
     coreMode: "lissajous",
   },
@@ -465,6 +465,7 @@ export default function FramelessNav({ activeTheme = "sunset", className = "" })
     if (pathname === "/") return 0;
     if (pathname.startsWith("/projects")) return 1;
     if (pathname.startsWith("/about")) return 2;
+    if (pathname.startsWith("/contact")) return 3;
     return 0;
   }, [pathname]);
 
@@ -947,27 +948,11 @@ export default function FramelessNav({ activeTheme = "sunset", className = "" })
         return;
       }
 
-      if (route.id === "contact") {
-        if (pathname === "/") {
-          e.preventDefault();
-          setHalfHovered(false);
-          if (compassOpen) toggleFullCompass(false);
-          const skyline = document.getElementById("skyline");
-          setTimeout(() => {
-            if (skyline) {
-              if (typeof window !== "undefined" && window.__lenis) {
-                window.__lenis.scrollTo(skyline, { offset: -60, duration: PHI });
-              } else {
-                skyline.scrollIntoView({ behavior: "smooth" });
-              }
-            } else {
-              window.location.href = route.href;
-            }
-          }, compassOpen ? 280 : 0);
-        } else {
-          setHalfHovered(false);
-          if (compassOpen) toggleFullCompass(false);
-        }
+      if (route.id === "contact" && pathname === "/contact") {
+        e.preventDefault();
+        setHalfHovered(false);
+        if (compassOpen) toggleFullCompass(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
 
@@ -1400,7 +1385,7 @@ export default function FramelessNav({ activeTheme = "sunset", className = "" })
           {/* 4 INTERACTIVE CARDINAL ROUTE STATIONS */}
           {ROUTES.map((route, idx) => {
             const isFocused = openFocusIdx === idx;
-            const isCurrent = activeRouteIdx === idx && route.id !== "contact";
+            const isCurrent = activeRouteIdx === idx;
             const posClass =
               idx === 0
                 ? "top-6 sm:top-8 left-1/2 -translate-x-1/2"

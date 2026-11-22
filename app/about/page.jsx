@@ -423,6 +423,11 @@ function InteractiveMetatronBlueprint() {
         best = i;
       }
     }
+    if (best !== null && best !== hoveredNode) {
+      try {
+        cozyAudio.playHandpan?.(best, 0.4);
+      } catch {}
+    }
     setHoveredNode(best);
   };
 
@@ -1018,6 +1023,16 @@ export default function AboutPage() {
     });
   };
 
+  // Play serene entry chime on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        cozyAudio.playEntry?.();
+      } catch {}
+    }, 380);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Sync document overscroll background cleanly when fully engulfed (prevents white bounce)
   useEffect(() => {
     const prevBg = document.documentElement.style.backgroundColor;
@@ -1317,7 +1332,15 @@ export default function AboutPage() {
           scrub: 0.45,
           onUpdate: (self) => {
             bridgeRef.current.engulf = self.progress;
-            setIsEngulfed(self.progress > 0.55);
+            const willEngulf = self.progress > 0.55;
+            setIsEngulfed((prev) => {
+              if (!prev && willEngulf) {
+                try {
+                  cozyAudio.playPortalWarp?.(4);
+                } catch {}
+              }
+              return willEngulf;
+            });
           },
         },
       });
@@ -1389,6 +1412,9 @@ export default function AboutPage() {
         };
 
         const onEnter = () => {
+          try {
+            cozyAudio.playWindChimeBreeze?.(0.75);
+          } catch {}
           sanctuaryLoopsRef.current.forEach((tw) => gsap.to(tw, { timeScale: 4.5, duration: 0.65, ease: "power2.out" }));
           if (engulfShockRef.current) {
             gsap.fromTo(
@@ -1460,6 +1486,11 @@ export default function AboutPage() {
               key={chap.id}
               type="button"
               onClick={() => scrollToChapter(chap.id)}
+              onMouseEnter={() => {
+                try {
+                  cozyAudio.playHover?.(Number(chap.id));
+                } catch {}
+              }}
               className="group flex items-center gap-3 cursor-pointer py-1 focus:outline-none"
               aria-label={`Jump to ${chap.label}`}
             >
@@ -1497,107 +1528,55 @@ export default function AboutPage() {
         </span>
       </nav>
 
-      {/* =========================================================================
-          HEADER: FLOATING MINIMAL NAVIGATION (Inverts seamlessly on Engulf)
-          ========================================================================= */}
-      <header
-        className={`sticky top-0 z-50 w-full backdrop-blur-md border-b transition-colors duration-500 ${isEngulfed
-            ? "bg-[#09090b]/80 border-white/[0.08]"
-            : "bg-white/80 border-black/[0.06]"
+      {/* Floating Ergonomic Sound Chime Toggle (No banner bar) */}
+      <div className="fixed top-5 right-6 z-40 pointer-events-auto">
+        <button
+          type="button"
+          onClick={toggleSound}
+          className={`inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full border transition-all text-xs font-mono shadow-sm backdrop-blur-md cursor-pointer ${
+            isEngulfed
+              ? "border-white/15 text-neutral-200 bg-[#09090b]/80 hover:bg-white/15"
+              : "border-neutral-200/90 text-neutral-700 bg-white/85 hover:bg-neutral-100 hover:text-black"
           }`}
-      >
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 h-20 flex items-center justify-between">
-          <Link
-            href="/"
-            className="studio-header-item flex items-center gap-2.5 no-underline group"
-            onClick={() => cozyAudio.playClose()}
+          title={isMuted ? "Enable sound chimes" : "Mute sound chimes"}
+          aria-label="Toggle sound chimes"
+        >
+          {isMuted ? (
+            <VolumeX className="size-3.5 text-neutral-400" />
+          ) : (
+            <Volume2 className={`size-3.5 ${isEngulfed ? "text-[#e5cca0]" : "text-neutral-900"}`} />
+          )}
+          <svg
+            ref={eqBarsRef}
+            aria-hidden="true"
+            viewBox="0 0 16 12"
+            className="hidden sm:block w-3.5 h-3"
           >
-            <img
-              src="/logo-mark.png"
-              alt="Saswat Mohanty Logo"
-              className="size-7 rounded-full object-contain shrink-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 group-hover:rotate-180"
-            />
-            <span
-              className={`font-['Clash_Display',sans-serif] font-semibold tracking-tight text-base sm:text-lg transition-colors duration-500 ${isEngulfed ? "text-white" : "text-neutral-900"
-                }`}
-            >
-              Saswat Mohanty
-            </span>
-            <span className="text-neutral-400 font-mono text-xs ml-0.5">®</span>
-          </Link>
+            <rect x="1" y="1" width="2" height="10" rx="1" className="eq-bar fill-current origin-bottom" />
+            <rect x="5" y="1" width="2" height="10" rx="1" className="eq-bar fill-current origin-bottom" />
+            <rect x="9" y="1" width="2" height="10" rx="1" className="eq-bar fill-current origin-bottom" />
+            <rect x="13" y="1" width="2" height="10" rx="1" className="eq-bar fill-current origin-bottom" />
+          </svg>
+          <span className="hidden sm:inline font-mono">
+            {isMuted ? "CHIME OFF" : "CHIME ON"}
+          </span>
+        </button>
+      </div>
 
-          <div className="studio-header-item flex items-center gap-2.5 sm:gap-3">
-            <button
-              type="button"
-              onClick={toggleSound}
-              className={`inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full border transition-all text-xs font-mono shadow-sm cursor-pointer ${isEngulfed
-                  ? "border-white/15 text-neutral-200 bg-white/5 hover:bg-white/15"
-                  : "border-neutral-200/90 text-neutral-700 bg-white/80 hover:bg-neutral-100 hover:text-black"
-                }`}
-              title={isMuted ? "Enable sound chimes" : "Mute sound chimes"}
-              aria-label="Toggle sound chimes"
-            >
-              {isMuted ? (
-                <VolumeX className="size-3.5 text-neutral-400" />
-              ) : (
-                <Volume2 className={`size-3.5 ${isEngulfed ? "text-[#e5cca0]" : "text-neutral-900"}`} />
-              )}
-              <svg
-                ref={eqBarsRef}
-                aria-hidden="true"
-                viewBox="0 0 16 12"
-                className="hidden sm:block w-3.5 h-3"
-              >
-                <rect x="1" y="1" width="2" height="10" rx="1" className="eq-bar fill-current origin-bottom" />
-                <rect x="5" y="1" width="2" height="10" rx="1" className="eq-bar fill-current origin-bottom" />
-                <rect x="9" y="1" width="2" height="10" rx="1" className="eq-bar fill-current origin-bottom" />
-                <rect x="13" y="1" width="2" height="10" rx="1" className="eq-bar fill-current origin-bottom" />
-              </svg>
-              <span className="hidden sm:inline font-mono">
-                {isMuted ? "CHIME OFF" : "CHIME ON"}
-              </span>
-            </button>
-
-            <Link
-              href="/projects"
-              className={`group hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-colors ${isEngulfed
-                  ? "text-neutral-300 hover:text-white"
-                  : "text-neutral-600 hover:text-neutral-900"
-                }`}
-              onClick={() => cozyAudio.playSnap(2, 1)}
-            >
-              <span>Works (08)</span>
-              <ArrowUpRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-
-            <Link
-              href="/"
-              className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold transition-all shadow-sm active:scale-95 no-underline ${isEngulfed
-                  ? "bg-white text-neutral-950 hover:bg-[#f7f2eb]"
-                  : "bg-neutral-900 hover:bg-black text-white"
-                }`}
-              onClick={() => cozyAudio.playClose()}
-            >
-              <span>Close</span>
-              <span className="text-neutral-400 font-mono">✕</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Hairline Scroll Progress Bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-transparent overflow-hidden">
-          <div
-            ref={topProgressRef}
-            className={`h-full w-full origin-left scale-x-0 will-change-transform transition-colors duration-500 ${isEngulfed ? "bg-[#e5cca0]" : "bg-neutral-900"
-              }`}
-          />
-        </div>
-      </header>
+      {/* Top Hairline Scroll Progress Bar (Minimal 2px line, zero banner) */}
+      <div className="fixed top-0 left-0 right-0 h-[2px] z-50 pointer-events-none">
+        <div
+          ref={topProgressRef}
+          className={`h-full w-full origin-left scale-x-0 will-change-transform transition-colors duration-500 ${
+            isEngulfed ? "bg-[#e5cca0]" : "bg-neutral-900"
+          }`}
+        />
+      </div>
 
       {/* =========================================================================
           SECTIONS 01 – 04: ARCHITECTURAL LIGHT EDITORIAL CANVAS
           ========================================================================= */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-10 pb-16">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 pt-28 sm:pt-32 pb-16">
         {/* Top Editorial Eyebrow & Perspective Switcher */}
         <div
           data-chapter="01"
@@ -1652,7 +1631,7 @@ export default function AboutPage() {
             jobPosition="Spatial Technologist & Creative Director"
             imageUrl="/placeholder.jpg"
             description="Saswat is an interactive systems designer and creative technologist specializing in real-time WebGL, spatial computing, and physical acoustic interfaces."
-            ctaHref="mailto:saswat@example.com"
+            ctaHref="/contact"
             className="my-4 sm:my-8"
           />
         </section>
@@ -1760,7 +1739,16 @@ export default function AboutPage() {
               <div
                 key={item.number}
                 onMouseMove={handleCardSpotlight}
-                onMouseEnter={() => setHoveredDiscipline(idx)}
+                onMouseEnter={() => {
+                  setHoveredDiscipline(idx);
+                  try {
+                    if (item.diagram === "acoustics") {
+                      cozyAudio.playWindChimeBreeze?.(0.7);
+                    } else {
+                      cozyAudio.playSnap?.(idx, 1);
+                    }
+                  } catch {}
+                }}
                 onMouseLeave={() => setHoveredDiscipline(null)}
                 className="discipline-card group relative overflow-hidden rounded-3xl border border-neutral-200/90 bg-[#faf9f6]/90 backdrop-blur-sm p-7 sm:p-9 hover:bg-white hover:border-[#a6864a]/40 hover:shadow-[0_24px_60px_rgba(0,0,0,0.06)] transition-all duration-500 flex flex-col justify-between"
               >
@@ -1848,7 +1836,12 @@ export default function AboutPage() {
               {CHRONOLOGY.map((entry, index) => (
                 <div
                   key={index}
-                  onMouseEnter={handleRowEnter}
+                  onMouseEnter={(e) => {
+                    handleRowEnter(e);
+                    try {
+                      cozyAudio.playHover?.(index + 3);
+                    } catch {}
+                  }}
                   onMouseLeave={handleRowLeave}
                   className="chrono-row group relative overflow-hidden py-8 sm:py-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-start px-5 rounded-xl"
                 >
@@ -1964,16 +1957,26 @@ export default function AboutPage() {
 
               <div className="flex flex-wrap items-center gap-4">
                 <div ref={engulfCtaRef} className="inline-block will-change-transform">
-                  <a
-                    href="mailto:saswat@example.com"
+                  <Link
+                    href="/contact"
                     className="group relative inline-flex items-center gap-2.5 overflow-hidden px-7 py-3.5 rounded-full bg-white text-neutral-950 font-medium text-sm transition-all duration-300 hover:bg-[#f7f2eb] active:scale-95 shadow-[0_0_40px_rgba(229,204,160,0.22)] no-underline"
+                    onClick={() => {
+                      try {
+                        cozyAudio.playSnap?.(3, 1);
+                      } catch {}
+                    }}
+                    onMouseEnter={() => {
+                      try {
+                        cozyAudio.playHover?.(6);
+                      } catch {}
+                    }}
                   >
                     <span>Initiate Collaboration</span>
                     <span className="relative flex size-4 items-center justify-center overflow-hidden">
                       <ArrowRight className="absolute size-4 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-5" />
                       <ArrowRight className="absolute size-4 -translate-x-5 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0" />
                     </span>
-                  </a>
+                  </Link>
                 </div>
 
                 <Link
