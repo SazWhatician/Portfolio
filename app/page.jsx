@@ -13,6 +13,8 @@ import ContributionSkyline from "@/components/ui/contribution-skyline";
 import GlassLoader from "@/components/ui/glass-loader";
 import TimeClock, { getSystemTimeTheme } from "@/components/ui/time-clock";
 import FramelessNav from "@/components/ui/frameless-nav";
+import ResumeModal from "@/components/ui/resume-modal";
+import { FileText, ArrowUpRight } from "lucide-react";
 import { cozyAudio } from "@/lib/cozy-sound";
 import initialGithubContributions from "@/data/github-contributions.json";
 
@@ -731,7 +733,7 @@ function ShowcaseMicroDiagram({ type, isNight }) {
    - Live Gaussian Proximity Glyph-Wave Physics on Pointer Sweep
    - 4-Theme Contrast Engineering (Always Razor-Legible Over 3D Clouds & Sky)
    ============================================================================ */
-function EditorialHeroMasthead({ activeTheme = "sunset", isNight }) {
+function EditorialHeroMasthead({ activeTheme = "sunset", isNight, onOpenResume }) {
   const wrapRef = useRef(null);
   const firstGlyphRefs = useRef([]);
   const lastGlyphRefs = useRef([]);
@@ -898,18 +900,51 @@ function EditorialHeroMasthead({ activeTheme = "sunset", isNight }) {
         style={{ background: palette.scrim }}
       />
 
-      {/* Precision Top Architectural Eyebrow + Coordinates */}
+      {/* Precision Top Architectural Eyebrow + Coordinates & Get CV Button */}
       <div
         style={{ textShadow: palette.subShadow }}
-        className={`${jetbrains.className} hero-exit-meta hero-sub-reveal relative z-10 flex flex-wrap items-center gap-3 mb-3 sm:mb-4`}
+        className={`${jetbrains.className} hero-exit-meta hero-sub-reveal relative z-10 flex flex-wrap items-center justify-between gap-3 mb-3 sm:mb-4`}
       >
-        <span className={`hero-couture-rule block h-[2px] w-9 sm:w-12 origin-left ${palette.ruleBg}`} />
-        <span className={`text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.32em] ${palette.subInk}`}>
-          <ScrambleText text="MONOGRAPH // EDITION XXVI" triggerOnMount delayMs={420} />
-        </span>
-        <span className={`hidden sm:inline-block text-[10px] tracking-[0.22em] opacity-75 ${palette.accentText}`}>
-          [28.61°N · 77.20°E]
-        </span>
+        <div className="flex items-center gap-3">
+          <span className={`hero-couture-rule block h-[2px] w-9 sm:w-12 origin-left ${palette.ruleBg}`} />
+          <span className={`text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.32em] ${palette.subInk}`}>
+            <ScrambleText text="MONOGRAPH // EDITION XXVI" triggerOnMount delayMs={420} />
+          </span>
+          <span className={`hidden sm:inline-block text-[10px] tracking-[0.22em] opacity-75 ${palette.accentText}`}>
+            [28.61°N · 77.20°E]
+          </span>
+        </div>
+
+        {/* Get CV / Resume Interactive Pill Button - positioned directly above Saswat Mohanty */}
+        {onOpenResume && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenResume();
+            }}
+            onMouseEnter={() => cozyAudio.playHover?.()}
+            className={`group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-[11px] font-mono tracking-wider transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm cursor-pointer ${
+              isNight || activeTheme === "night"
+                ? "bg-white/10 hover:bg-white/20 text-white border-white/25 shadow-indigo-950/40 hover:shadow-[0_0_20px_rgba(199,210,254,0.25)]"
+                : activeTheme === "sunset"
+                  ? "bg-[#fff8ee]/90 hover:bg-white text-[#110905] border-[#9b3d0b]/40 shadow-[#9b3d0b]/10 hover:shadow-[0_0_20px_rgba(155,61,11,0.2)]"
+                  : "bg-white/90 hover:bg-white text-neutral-900 border-neutral-300 shadow-neutral-900/5 hover:border-neutral-900 hover:shadow-[0_0_15px_rgba(0,0,0,0.1)]"
+            }`}
+            title="Open and download curriculum vitae / resume"
+          >
+            <FileText className={`size-3.5 ${isNight ? "text-amber-300" : "text-amber-600"}`} />
+            <span className="font-semibold uppercase tracking-widest text-[10px]">Get CV / Resume</span>
+            <span
+              className={`text-[9px] px-1.5 py-0.2 rounded-full border opacity-75 font-mono ${
+                isNight ? "border-white/20 text-indigo-200" : "border-black/20 text-neutral-600"
+              }`}
+            >
+              PDF
+            </span>
+            <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 opacity-70" />
+          </button>
+        )}
       </div>
 
       {/* MONUMENTAL MIXED-TYPEFACE MASTHEAD */}
@@ -1028,6 +1063,7 @@ function EditorialHeroMasthead({ activeTheme = "sunset", isNight }) {
 export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isShipLoaded, setIsShipLoaded] = useState(false);
+  const [isResumeOpen, setIsResumeOpen] = useState(false);
   const [contributions, setContributions] = useState(
     initialGithubContributions?.contributions || []
   );
@@ -1724,7 +1760,11 @@ export default function Home() {
 
         {/* Bottom Row: Monumental Kinetic Masthead + Logarithmic Scroll Cue */}
         <div className="w-full flex flex-col md:flex-row md:items-end justify-between gap-8 z-30 pointer-events-none">
-          <EditorialHeroMasthead activeTheme={activeTheme} isNight={isNight} />
+          <EditorialHeroMasthead
+            activeTheme={activeTheme}
+            isNight={isNight}
+            onOpenResume={() => setIsResumeOpen(true)}
+          />
 
           {/* BOTTOM RIGHT: GOLDEN SPIRAL SCROLL PENDULUM */}
           <div className="hero-exit-meta hero-scroll-reveal flex items-center md:flex-col md:items-end gap-3 pointer-events-none pb-2">
@@ -2420,6 +2460,13 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Interactive Animated Resume / CV Modal Window */}
+      <ResumeModal
+        isOpen={isResumeOpen}
+        onClose={() => setIsResumeOpen(false)}
+        isNight={isNight}
+      />
     </div>
   );
 }
